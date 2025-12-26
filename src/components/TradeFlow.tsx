@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
-  AlertTriangle,
   ArrowRight,
   BarChart3,
   Bot,
@@ -10,9 +9,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronRight,
-  Copy,
   DollarSign,
-  Download,
   Filter,
   Layers,
   LineChart,
@@ -36,9 +33,9 @@ import BacktestModal from "./BacktestModal";
 
 // --- Minimal in-file UI primitives (shadcn-like) ---
 const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className = "", children }) => (
-  <div className={`glass-card p-4 ${className}`}>{children}</div>
+  <div className={`glass-card ${className}`}>{children}</div>
 );
-const CardHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => <div className="flex items-center justify-between mb-3">{children}</div>;
+const CardHeader: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = "" }) => <div className={`flex items-center justify-between ${className}`}>{children}</div>;
 const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => <h3 className={`text-lg font-semibold ${className || ''}`}>{children}</h3>;
 const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "solid" | "ghost" | "outline" }> = ({ className = "", variant = "solid", children, ...props }) => {
   const base = "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500/50";
@@ -176,20 +173,20 @@ export default function TradeFlow() {
   const avgAPR = strategies.length ? strategies.reduce((a, b) => a + b.aprPct, 0) / strategies.length : 0;
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-8 px-4 md:px-6 lg:px-8 py-6 md:py-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <Stat icon={<DollarSign className="h-5 w-5 text-purple-400" />} label="Total TVL (visible)" value={fmtUSD(totalTVL)} hint="Across filtered strategies" />
         <Stat icon={<BarChart3 className="h-5 w-5 text-pink-400" />} label="Avg. APR" value={`${avgAPR.toFixed(1)}%`} hint="Last 30 days (simulated)" />
         <Stat icon={<Users className="h-5 w-5 text-purple-400" />} label="Total Followers" value={strategies.reduce((a, b) => a + b.followers, 0).toLocaleString()} />
         <Stat icon={<ShieldCheck className="h-5 w-5 text-pink-400" />} label="Risk Controls" value="Auto‑hedge ON" hint="Global setting" />
       </div>
 
-      <Card>
+      <Card className="p-5 md:p-6">
         <CardHeader>
           <div className="flex items-center gap-2"><SlidersHorizontal className="h-5 w-5 text-purple-400" /><CardTitle className="text-white">Filters</CardTitle></div>
           <div className="flex items-center gap-3"><span className="text-sm text-gray-300">Live only</span><Toggle checked={onlyLive} onChange={setOnlyLive} /></div>
         </CardHeader>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <Input placeholder="Search strategies, pairs, owners…" value={q} onChange={(e) => setQ(e.target.value)} />
           <Select value={risk} onChange={(e) => setRisk(e.target.value)}>
             <option>All</option><option>Conservative</option><option>Balanced</option><option>Aggressive</option>
@@ -198,43 +195,59 @@ export default function TradeFlow() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         {strategies.map((s) => (
           <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-            <div className="glass-card-premium">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white neon-glow"><Brain className="h-5 w-5" /></div>
-                  <div>
-                    <div className="text-base font-semibold flex items-center gap-2 text-white">{s.name}<span className={`text-xs px-2 py-1 rounded-full ${s.status === "Live" ? "bg-green-500/20 text-green-400 border border-green-500/30" : s.status === "Paused" ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "bg-gray-500/20 text-gray-400 border border-gray-500/30"}`}>{s.status}</span></div>
-                    <div className="text-xs text-gray-400">{s.chain} · {s.risk} · Owner {s.owner}</div>
+            <div className="glass-card-premium p-5 md:p-6">
+              <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white neon-glow flex-shrink-0"><Brain className="h-5 w-5" /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <h3 className="text-base md:text-lg font-semibold text-white leading-tight">{s.name}</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${s.status === "Live" ? "bg-green-500/20 text-green-400 border border-green-500/30" : s.status === "Paused" ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "bg-gray-500/20 text-gray-400 border border-gray-500/30"}`}>{s.status}</span>
+                    </div>
+                    <div className="text-xs text-gray-400 leading-relaxed">{s.chain} · {s.risk} · Owner {s.owner}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline"><Play className="h-4 w-4" /> Simulate</Button>
-                  <Button variant="solid"><Rocket className="h-4 w-4" /> Deploy</Button>
+                <div className="flex flex-col gap-2 flex-shrink-0">
+                  <Button variant="outline" className="w-full whitespace-nowrap"><Play className="h-4 w-4" /> Simulate</Button>
+                  <Button variant="solid" className="w-full whitespace-nowrap"><Rocket className="h-4 w-4" /> Deploy</Button>
                 </div>
-              </CardHeader>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="text-sm"><div className="text-gray-400">TVL</div><div className="font-semibold text-white">{fmtUSD(s.tvlUSD)}</div></div>
-                <div className="text-sm"><div className="text-gray-400">APR</div><div className={`font-semibold ${s.aprPct >= 0 ? "text-green-400" : "text-red-400"}`}>{s.aprPct.toFixed(1)}%</div></div>
-                <div className="text-sm"><div className="text-gray-400">Max DD</div><div className="font-semibold text-white">{s.drawdownPct.toFixed(1)}%</div></div>
-                <div className="text-sm"><div className="text-gray-400">Followers</div><div className="font-semibold text-white">{s.followers.toLocaleString()}</div></div>
               </div>
 
-              <div className="mt-4">
-                <div className="text-xs uppercase text-gray-400 mb-2">MCP Blocks</div>
-                <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+                <div>
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wide">TVL</div>
+                  <div className="text-base md:text-lg font-semibold text-white">{fmtUSD(s.tvlUSD)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wide">APR</div>
+                  <div className={`text-base md:text-lg font-semibold ${s.aprPct >= 0 ? "text-green-400" : "text-red-400"}`}>{s.aprPct.toFixed(1)}%</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Max DD</div>
+                  <div className="text-base md:text-lg font-semibold text-white">{s.drawdownPct.toFixed(1)}%</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-400 mb-2 uppercase tracking-wide">Followers</div>
+                  <div className="text-base md:text-lg font-semibold text-white">{s.followers.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="text-xs uppercase text-gray-400 mb-3 font-medium tracking-wide">MCP Blocks</div>
+                <div className="flex flex-wrap gap-2.5">
                   {s.blocks.map((b, i) => (
-                    <span key={i} className="inline-flex items-center gap-2 text-xs border border-purple-500/30 bg-black/30 rounded-xl px-3 py-2 text-white">
-                      {b.kind === "AMM_LP" && <Layers className="h-4 w-4 text-purple-400" />}
-                      {b.kind === "TWAP" && <LineChart className="h-4 w-4 text-pink-400" />}
-                      {b.kind === "LIMIT_ORDER" && <Link2 className="h-4 w-4 text-purple-400" />}
-                      {b.kind === "LENDING" && <DollarSign className="h-4 w-4 text-pink-400" />}
-                      {b.kind === "YIELD_TOKENIZE" && <Zap className="h-4 w-4 text-purple-400" />} {b.kind}
-                      <ChevronRight className="h-3 w-3 opacity-60" />
-                      <code className="text-[11px] opacity-80">
+                    <span key={i} className="inline-flex items-center gap-2 text-xs border border-purple-500/30 bg-black/30 rounded-xl px-3 py-2.5 text-white">
+                      {b.kind === "AMM_LP" && <Layers className="h-4 w-4 text-purple-400 flex-shrink-0" />}
+                      {b.kind === "TWAP" && <LineChart className="h-4 w-4 text-pink-400 flex-shrink-0" />}
+                      {b.kind === "LIMIT_ORDER" && <Link2 className="h-4 w-4 text-purple-400 flex-shrink-0" />}
+                      {b.kind === "LENDING" && <DollarSign className="h-4 w-4 text-pink-400 flex-shrink-0" />}
+                      {b.kind === "YIELD_TOKENIZE" && <Zap className="h-4 w-4 text-purple-400 flex-shrink-0" />}
+                      <span className="font-medium">{b.kind}</span>
+                      <ChevronRight className="h-3 w-3 opacity-60 flex-shrink-0" />
+                      <code className="text-[11px] opacity-80 break-all">
                         {b.kind === "AMM_LP" && `${b.protocol}:${(b as any).pair}`}
                         {b.kind === "TWAP" && `win=${(b as any).windowSecs}s · sl=${(b as any).maxSlippageBps}bps`}
                         {b.kind === "LIMIT_ORDER" && `${(b as any).hook} hook`}
@@ -246,29 +259,47 @@ export default function TradeFlow() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium mb-2 text-white"><Activity className="h-4 w-4 text-purple-400" /> Recent Signals</div>
-                  <ul className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <Card className="p-4 md:p-5">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-4 text-white">
+                    <Activity className="h-4 w-4 text-purple-400" /> 
+                    <span>Recent Signals</span>
+                  </div>
+                  <ul className="space-y-4">
                     {(MOCK_SIGNALS[s.id] || []).map((sig, idx) => (
                       <li key={idx} className="flex items-start gap-3">
-                        <div className="mt-1"><CheckCircle2 className="h-4 w-4 text-green-400" /></div>
-                        <div>
-                          <div className="text-xs text-gray-400">{new Date(sig.ts).toLocaleString()}</div>
-                          <div className="text-sm font-medium text-white">{sig.action}</div>
-                          <div className="text-sm text-gray-300">{sig.details}</div>
+                        <div className="mt-0.5 flex-shrink-0"><CheckCircle2 className="h-4 w-4 text-green-400" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-gray-400 mb-1.5">{new Date(sig.ts).toLocaleString()}</div>
+                          <div className="text-sm font-semibold text-white mb-1.5">{sig.action}</div>
+                          <div className="text-sm text-gray-300 leading-relaxed break-words">{sig.details}</div>
                         </div>
                       </li>
                     ))}
                   </ul>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 text-sm font-medium mb-2 text-white"><Settings className="h-4 w-4 text-pink-400" /> Risk Controls</div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><div className="text-gray-400">Max Slippage</div><div className="font-semibold text-white">30 bps</div></div>
-                    <div><div className="text-gray-400">Stop Loss</div><div className="font-semibold text-white">-6.0%</div></div>
-                    <div><div className="text-gray-400">Rebalance</div><div className="font-semibold text-white">volatility‑adaptive</div></div>
-                    <div><div className="text-gray-400">Order Hooks</div><div className="font-semibold text-white">RANGE + DUTCH</div></div>
+                <Card className="p-4 md:p-5">
+                  <div className="flex items-center gap-2 text-sm font-medium mb-4 text-white">
+                    <Settings className="h-4 w-4 text-pink-400" /> 
+                    <span>Risk Controls</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-400 mb-1.5 text-xs">Max Slippage</div>
+                      <div className="font-semibold text-white">30 bps</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-400 mb-1.5 text-xs">Stop Loss</div>
+                      <div className="font-semibold text-white">-6.0%</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-gray-400 mb-1.5 text-xs">Rebalance</div>
+                      <div className="font-semibold text-white break-words">volatility‑adaptive</div>
+                    </div>
+                    <div className="col-span-2">
+                      <div className="text-gray-400 mb-1.5 text-xs">Order Hooks</div>
+                      <div className="font-semibold text-white break-words">RANGE + DUTCH</div>
+                    </div>
                   </div>
                 </Card>
               </div>
@@ -278,14 +309,14 @@ export default function TradeFlow() {
       </div>
 
       {/* Builder */}
-      <Card>
-        <CardHeader>
+      <Card className="p-5 md:p-6 lg:p-8">
+        <CardHeader className="mb-6">
           <div className="flex items-center gap-2"><Bot className="h-5 w-5 text-purple-400" /><CardTitle className="text-white">Strategy Builder (TradeFlow)</CardTitle></div>
           <Button variant="outline"><Plus className="h-4 w-4" /> Add Block</Button>
         </CardHeader>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5">
           <div>
-            <label className="text-xs text-gray-400">Name</label>
+            <label className="text-xs text-gray-400 mb-2 block">Name</label>
             <Input 
               placeholder="My AI LP + TWAP bot" 
               value={strategyConfig.name}
@@ -293,7 +324,7 @@ export default function TradeFlow() {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-400">Strategy Type</label>
+            <label className="text-xs text-gray-400 mb-2 block">Strategy Type</label>
             <Select 
               value={strategyConfig.type}
               onChange={(e) => setStrategyConfig(prev => ({ ...prev, type: e.target.value as any }))}
@@ -306,7 +337,7 @@ export default function TradeFlow() {
             </Select>
           </div>
           <div>
-            <label className="text-xs text-gray-400">Risk Level</label>
+            <label className="text-xs text-gray-400 mb-2 block">Risk Level</label>
             <Select 
               value={strategyConfig.riskLevel}
               onChange={(e) => setStrategyConfig(prev => ({ ...prev, riskLevel: e.target.value as any }))}
@@ -328,16 +359,16 @@ export default function TradeFlow() {
             </Button>
           </div>
         </div>
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
           {[{ label: "AMM LP", icon: <Layers className="h-4 w-4" /> }, { label: "TWAP", icon: <LineChart className="h-4 w-4" /> }, { label: "Limit Order", icon: <Link2 className="h-4 w-4" /> }, { label: "Lending", icon: <DollarSign className="h-4 w-4" /> }, { label: "Pendle", icon: <Zap className="h-4 w-4" /> }].map((b) => (
-            <div key={b.label} className="rounded-xl border border-dashed border-purple-500/30 bg-black/20 p-3 flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-white"><span className="text-purple-400">{b.icon}</span>{b.label}</div><Button variant="ghost"><Plus className="h-4 w-4" /></Button></div>
+            <div key={b.label} className="rounded-xl border border-dashed border-purple-500/30 bg-black/20 p-4 flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-white"><span className="text-purple-400">{b.icon}</span>{b.label}</div><Button variant="ghost"><Plus className="h-4 w-4" /></Button></div>
           ))}
         </div>
-        <div className="mt-6">
-          <div className="text-xs uppercase text-gray-400 mb-2">Preview</div>
+        <div className="mt-6 md:mt-8">
+          <div className="text-xs uppercase text-gray-400 mb-4">Preview</div>
           
           {/* Tab Navigation */}
-          <div className="flex items-center gap-1 mb-4 p-1 bg-black/30 rounded-lg border border-purple-500/30">
+          <div className="flex items-center gap-1 mb-6 p-1 bg-black/30 rounded-lg border border-purple-500/30">
             <button
               onClick={() => setActiveTab("workflow")}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
@@ -366,10 +397,10 @@ export default function TradeFlow() {
           {activeTab === "workflow" ? (
             <WorkflowDiagram 
               strategy={strategyConfig}
-              className="mb-4"
+              className="mb-6"
             />
           ) : (
-            <div className="rounded-2xl bg-black/50 border border-purple-500/30 p-4 text-sm mb-4">
+            <div className="rounded-2xl bg-black/50 border border-purple-500/30 p-5 md:p-6 text-sm mb-6">
               <pre className="whitespace-pre-wrap text-xs text-gray-300">{JSON.stringify({
                 name: strategyConfig.name,
                 type: strategyConfig.type,
@@ -391,7 +422,7 @@ export default function TradeFlow() {
             </div>
           )}
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
             <Button onClick={() => setIsSimulationOpen(true)}>
               <BarChart3 className="h-4 w-4" /> Simulate Strategy
             </Button>
