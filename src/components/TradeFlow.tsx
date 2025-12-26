@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Activity,
-  ArrowRight,
   BarChart3,
   Bot,
   Brain,
@@ -26,6 +25,10 @@ import {
   Zap,
   Code,
   GitBranch,
+  TrendingUp,
+  TrendingDown,
+  X,
+  Trash2,
 } from "lucide-react";
 import WorkflowDiagram from "./WorkflowDiagram";
 import SimulationModal from "./SimulationModal";
@@ -147,6 +150,28 @@ const Stat: React.FC<{ icon: React.ReactNode; label: string; value: string; hint
   </div>
 );
 
+// Social Media Icon Component
+const SocialIcon: React.FC<{ type: "twitter" | "reddit" | "telegram"; className?: string }> = ({ type, className = "h-5 w-5" }) => {
+  if (type === "twitter") {
+    return <X className={`${className} text-[#1DA1F2]`} />;
+  }
+  if (type === "reddit") {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor" style={{ color: "#FF4500" }}>
+        <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+      </svg>
+    );
+  }
+  if (type === "telegram") {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="currentColor" style={{ color: "#0088cc" }}>
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+      </svg>
+    );
+  }
+  return null;
+};
+
 // ===================== TradeFlow (for strategists/pros) =====================
 export default function TradeFlow() {
   const [q, setQ] = useState("");
@@ -158,19 +183,32 @@ export default function TradeFlow() {
   
   // Strategy configuration state
   const [strategyConfig, setStrategyConfig] = useState({
-    name: "My AI LP + TWAP bot",
-    type: "AMM_LP" as "AMM_LP" | "TWAP" | "LENDING" | "PENDLE" | "ONEINCH_LOP",
-    riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
-    timeHorizon: "MEDIUM" as "SHORT" | "MEDIUM" | "LONG",
+    name: "My AI Trading Strategy",
+    aiModel: "claude-sonnet-4.5" as string,
+    socialSources: [] as Array<{ type: "twitter" | "reddit" | "telegram"; handle: string }>,
+    algorithm: "auto" as "auto" | "custom",
+    customAlgorithm: "",
+    stopLoss: "5",
+    takeProfit: "15",
     tokens: ["ETH", "USDC"],
     amount: "1000",
-    slippage: "0.5",
-    gasPrice: "20",
-    conditions: ["Price above 2000", "Volume > 1M", "RSI < 70"]
   });
   const strategies = useMemo(() => MOCK_STRATEGIES.filter((s) => (!onlyLive || s.status === "Live") && (risk === "All" || s.risk === risk) && s.name.toLowerCase().includes(q.toLowerCase())), [q, onlyLive, risk]);
   const totalTVL = strategies.reduce((a, b) => a + b.tvlUSD, 0);
   const avgAPR = strategies.length ? strategies.reduce((a, b) => a + b.aprPct, 0) / strategies.length : 0;
+
+  // Helper function to transform new config to legacy format for compatibility
+  const transformToLegacyConfig = (config: typeof strategyConfig) => ({
+    name: config.name,
+    type: "AMM_LP" as "AMM_LP" | "TWAP" | "LENDING" | "PENDLE" | "ONEINCH_LOP",
+    riskLevel: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH",
+    timeHorizon: "MEDIUM" as "SHORT" | "MEDIUM" | "LONG",
+    tokens: config.tokens,
+    amount: config.amount,
+    slippage: "0.5",
+    gasPrice: "20",
+    conditions: config.socialSources.map(s => `${s.type}: ${s.handle}`),
+  });
 
   return (
     <div className="space-y-8 px-4 md:px-6 lg:px-8 py-6 md:py-8">
@@ -308,64 +346,228 @@ export default function TradeFlow() {
         ))}
       </div>
 
-      {/* Builder */}
+      {/* Advanced Strategy Builder */}
       <Card className="p-5 md:p-6 lg:p-8">
         <CardHeader className="mb-6">
-          <div className="flex items-center gap-2"><Bot className="h-5 w-5 text-purple-400" /><CardTitle className="text-white">Strategy Builder (TradeFlow)</CardTitle></div>
-          <Button variant="outline"><Plus className="h-4 w-4" /> Add Block</Button>
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5 text-purple-400" />
+            <CardTitle className="text-white">Advanced Strategy Builder</CardTitle>
+          </div>
         </CardHeader>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-5">
-          <div>
-            <label className="text-xs text-gray-400 mb-2 block">Name</label>
-            <Input 
-              placeholder="My AI LP + TWAP bot" 
-              value={strategyConfig.name}
-              onChange={(e) => setStrategyConfig(prev => ({ ...prev, name: e.target.value }))}
-            />
+
+        {/* Strategy Name */}
+        <div className="mb-6">
+          <label className="text-sm font-medium text-gray-300 mb-2 block">Strategy Name</label>
+          <Input 
+            placeholder="Enter strategy name..." 
+            value={strategyConfig.name}
+            onChange={(e) => setStrategyConfig(prev => ({ ...prev, name: e.target.value }))}
+            className="max-w-md"
+          />
+        </div>
+
+        {/* AI Model Selection */}
+        <div className="mb-8">
+          <label className="text-sm font-medium text-gray-300 mb-3 block flex items-center gap-2">
+            <Brain className="h-4 w-4 text-purple-400" />
+            <span>Select AI Model</span>
+          </label>
+          <Select 
+            value={strategyConfig.aiModel}
+            onChange={(e) => setStrategyConfig(prev => ({ ...prev, aiModel: e.target.value }))}
+            className="max-w-md"
+          >
+            <option value="deepseek-chat-v3.1">DeepSeek Chat V3.1</option>
+            <option value="qwen3-max">Qwen3 Max</option>
+            <option value="claude-sonnet-4.5">Claude Sonnet 4.5</option>
+            <option value="grok-4">Grok 4</option>
+            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+            <option value="openai-gpt-5.1">OpenAI ChatGPT / GPT-5.1</option>
+          </Select>
+        </div>
+
+        {/* Social Media Sources */}
+        <div className="mb-8">
+          <label className="text-sm font-medium text-gray-300 mb-3 block flex items-center gap-2">
+            <Users className="h-4 w-4 text-purple-400" />
+            <span>Social Media Sources</span>
+          </label>
+          <p className="text-xs text-gray-400 mb-4">Add Twitter/X accounts, Reddit communities, or Telegram channels to track</p>
+          
+          {/* Add Source Form */}
+          <div className="mb-4 p-4 rounded-xl border border-purple-500/30 bg-black/20">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="text-xs text-gray-400 mb-1.5 block">Platform</label>
+                <div className="relative">
+                  <Select 
+                    id="source-type"
+                    defaultValue="twitter"
+                    className="mb-0"
+                  >
+                    <option value="twitter">🐦 Twitter / X</option>
+                    <option value="reddit">🔴 Reddit</option>
+                    <option value="telegram">✈️ Telegram</option>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1.5 block">Account / Channel</label>
+                <Input 
+                  id="source-handle"
+                  placeholder="e.g., @elonmusk or r/cryptocurrency"
+                  className="mb-0"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const type = (document.getElementById("source-type") as HTMLSelectElement).value as "twitter" | "reddit" | "telegram";
+                      const handle = (document.getElementById("source-handle") as HTMLInputElement).value.trim();
+                      if (handle) {
+                        setStrategyConfig(prev => ({
+                          ...prev,
+                          socialSources: [...prev.socialSources, { type, handle }]
+                        }));
+                        (document.getElementById("source-handle") as HTMLInputElement).value = "";
+                      }
+                    }
+                  }}
+                />
+              </div>
+              <Button 
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  const type = (document.getElementById("source-type") as HTMLSelectElement).value as "twitter" | "reddit" | "telegram";
+                  const handle = (document.getElementById("source-handle") as HTMLInputElement).value.trim();
+                  if (handle) {
+                    setStrategyConfig(prev => ({
+                      ...prev,
+                      socialSources: [...prev.socialSources, { type, handle }]
+                    }));
+                    (document.getElementById("source-handle") as HTMLInputElement).value = "";
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4" /> Add Source
+              </Button>
+            </div>
           </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-2 block">Strategy Type</label>
-            <Select 
-              value={strategyConfig.type}
-              onChange={(e) => setStrategyConfig(prev => ({ ...prev, type: e.target.value as any }))}
+
+          {/* Added Sources List */}
+          {strategyConfig.socialSources.length > 0 && (
+            <div className="space-y-2">
+              {strategyConfig.socialSources.map((source, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-xl border border-purple-500/30 bg-black/30">
+                  <div className="flex items-center gap-3 flex-1">
+                    <SocialIcon type={source.type} className="h-5 w-5 flex-shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">{source.type}</span>
+                      <span className="text-sm text-white font-medium">{source.handle}</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setStrategyConfig(prev => ({
+                        ...prev,
+                        socialSources: prev.socialSources.filter((_, i) => i !== idx)
+                      }));
+                    }}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Algorithm Selection */}
+        <div className="mb-8">
+          <label className="text-sm font-medium text-gray-300 mb-3 block flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-purple-400" />
+            <span>Trading Algorithm</span>
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+            <div
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                strategyConfig.algorithm === "auto"
+                  ? "border-purple-500 bg-purple-500/10"
+                  : "border-purple-500/30 bg-black/20 hover:border-purple-500/50"
+              }`}
+              onClick={() => setStrategyConfig(prev => ({ ...prev, algorithm: "auto" }))}
             >
-              <option value="AMM_LP">AMM LP</option>
-              <option value="TWAP">TWAP</option>
-              <option value="LENDING">Lending</option>
-              <option value="PENDLE">Pendle</option>
-              <option value="ONEINCH_LOP">1inch LOP</option>
-            </Select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 mb-2 block">Risk Level</label>
-            <Select 
-              value={strategyConfig.riskLevel}
-              onChange={(e) => setStrategyConfig(prev => ({ ...prev, riskLevel: e.target.value as any }))}
+              <div className="flex items-center gap-3 mb-2">
+                <Sparkles className="h-5 w-5 text-purple-400" />
+                <span className="font-medium text-white">AI Auto-Select</span>
+              </div>
+              <p className="text-xs text-gray-400">Let AI analyzer choose the best algorithm for your asset</p>
+            </div>
+            <div
+              className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                strategyConfig.algorithm === "custom"
+                  ? "border-purple-500 bg-purple-500/10"
+                  : "border-purple-500/30 bg-black/20 hover:border-purple-500/50"
+              }`}
+              onClick={() => setStrategyConfig(prev => ({ ...prev, algorithm: "custom" }))}
             >
-              <option value="LOW">Low Risk</option>
-              <option value="MEDIUM">Medium Risk</option>
-              <option value="HIGH">High Risk</option>
-            </Select>
+              <div className="flex items-center gap-3 mb-2">
+                <Settings className="h-5 w-5 text-pink-400" />
+                <span className="font-medium text-white">Custom Algorithm</span>
+              </div>
+              <p className="text-xs text-gray-400">Specify your own trading algorithm</p>
+            </div>
           </div>
-          <div className="flex items-end">
-            <Button className="w-full" onClick={() => {
-              // AI suggestion logic could go here
-              setStrategyConfig(prev => ({
-                ...prev,
-                riskLevel: prev.riskLevel === "LOW" ? "MEDIUM" : prev.riskLevel === "MEDIUM" ? "HIGH" : "LOW"
-              }));
-            }}>
-              <Sparkles className="h-4 w-4" /> AI‑Suggest Params
-            </Button>
+          {strategyConfig.algorithm === "custom" && (
+            <div className="mt-4 max-w-2xl">
+              <Input
+                placeholder="Enter custom algorithm parameters..."
+                value={strategyConfig.customAlgorithm}
+                onChange={(e) => setStrategyConfig(prev => ({ ...prev, customAlgorithm: e.target.value }))}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Stop Loss & Take Profit */}
+        <div className="mb-8">
+          <label className="text-sm font-medium text-gray-300 mb-3 block flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-purple-400" />
+            <span>Risk Management</span>
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+            <div>
+              <label className="text-xs text-gray-400 mb-2 block flex items-center gap-2">
+                <TrendingDown className="h-3 w-3 text-red-400" />
+                <span>Stop Loss (%)</span>
+              </label>
+              <Input
+                type="number"
+                placeholder="5.0"
+                value={strategyConfig.stopLoss}
+                onChange={(e) => setStrategyConfig(prev => ({ ...prev, stopLoss: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500 mt-1">AI will stop trading and move profits to wallet if loss exceeds this %</p>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-2 block flex items-center gap-2">
+                <TrendingUp className="h-3 w-3 text-green-400" />
+                <span>Take Profit (%)</span>
+              </label>
+              <Input
+                type="number"
+                placeholder="15.0"
+                value={strategyConfig.takeProfit}
+                onChange={(e) => setStrategyConfig(prev => ({ ...prev, takeProfit: e.target.value }))}
+              />
+              <p className="text-xs text-gray-500 mt-1">AI will stop trading and move profits to wallet if profit reaches this %</p>
+            </div>
           </div>
         </div>
-        <div className="mt-6 md:mt-8 grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4">
-          {[{ label: "AMM LP", icon: <Layers className="h-4 w-4" /> }, { label: "TWAP", icon: <LineChart className="h-4 w-4" /> }, { label: "Limit Order", icon: <Link2 className="h-4 w-4" /> }, { label: "Lending", icon: <DollarSign className="h-4 w-4" /> }, { label: "Pendle", icon: <Zap className="h-4 w-4" /> }].map((b) => (
-            <div key={b.label} className="rounded-xl border border-dashed border-purple-500/30 bg-black/20 p-4 flex items-center justify-between"><div className="flex items-center gap-2 text-sm text-white"><span className="text-purple-400">{b.icon}</span>{b.label}</div><Button variant="ghost"><Plus className="h-4 w-4" /></Button></div>
-          ))}
-        </div>
-        <div className="mt-6 md:mt-8">
-          <div className="text-xs uppercase text-gray-400 mb-4">Preview</div>
+
+        {/* Preview Section */}
+        <div className="mt-8 pt-6 border-t border-purple-500/30">
+          <div className="text-xs uppercase text-gray-400 mb-4 font-medium">Preview</div>
           
           {/* Tab Navigation */}
           <div className="flex items-center gap-1 mb-6 p-1 bg-black/30 rounded-lg border border-purple-500/30">
@@ -396,28 +598,21 @@ export default function TradeFlow() {
           {/* Tab Content */}
           {activeTab === "workflow" ? (
             <WorkflowDiagram 
-              strategy={strategyConfig}
+              strategy={transformToLegacyConfig(strategyConfig)}
               className="mb-6"
             />
           ) : (
             <div className="rounded-2xl bg-black/50 border border-purple-500/30 p-5 md:p-6 text-sm mb-6">
               <pre className="whitespace-pre-wrap text-xs text-gray-300">{JSON.stringify({
                 name: strategyConfig.name,
-                type: strategyConfig.type,
-                riskLevel: strategyConfig.riskLevel,
-                timeHorizon: strategyConfig.timeHorizon,
+                aiModel: strategyConfig.aiModel,
+                socialSources: strategyConfig.socialSources,
+                algorithm: strategyConfig.algorithm,
+                customAlgorithm: strategyConfig.customAlgorithm,
+                stopLoss: strategyConfig.stopLoss,
+                takeProfit: strategyConfig.takeProfit,
                 tokens: strategyConfig.tokens,
                 amount: strategyConfig.amount,
-                slippage: strategyConfig.slippage,
-                gasPrice: strategyConfig.gasPrice,
-                conditions: strategyConfig.conditions,
-                blocks: [
-                  { kind: "AMM_LP", protocol: "UniswapV3", pair: "ETH/USDC", feeTierBps: 500, range: { lower: 2300, upper: 3150 } },
-                  { kind: "LIMIT_ORDER", hook: "RANGE", params: { grid: [[2400, 10], [2800, 10], [3100, 5]] } },
-                  { kind: "TWAP", windowSecs: 900, maxSlippageBps: 25 },
-                ],
-                riskControls: { maxSlippageBps: 30, stopLossPct: -6.0 },
-                copyTrading: { feeFollowPct: 5, performanceFeePct: 10 },
               }, null, 2)}</pre>
             </div>
           )}
@@ -426,7 +621,9 @@ export default function TradeFlow() {
             <Button onClick={() => setIsSimulationOpen(true)}>
               <BarChart3 className="h-4 w-4" /> Simulate Strategy
             </Button>
-            <Button><ArrowRight className="h-4 w-4" /> Deploy Bot</Button>
+            <Button>
+              <Rocket className="h-4 w-4" /> Deploy Bot
+            </Button>
             <Button variant="outline" onClick={() => setIsBacktestOpen(true)}>
               <CalendarClock className="h-4 w-4" /> Schedule Backtest
             </Button>
@@ -438,14 +635,14 @@ export default function TradeFlow() {
       <SimulationModal
         isOpen={isSimulationOpen}
         onClose={() => setIsSimulationOpen(false)}
-        strategy={strategyConfig}
+        strategy={transformToLegacyConfig(strategyConfig)}
       />
       
       {/* Backtest Modal */}
       <BacktestModal
         isOpen={isBacktestOpen}
         onClose={() => setIsBacktestOpen(false)}
-        strategy={strategyConfig}
+        strategy={transformToLegacyConfig(strategyConfig)}
       />
     </div>
   );
