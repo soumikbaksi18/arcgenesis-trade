@@ -598,7 +598,7 @@ export default function TradeFlow() {
           {/* Tab Content */}
           {activeTab === "workflow" ? (
             <WorkflowDiagram 
-              strategy={transformToLegacyConfig(strategyConfig)}
+              strategy={strategyConfig}
               className="mb-6"
             />
           ) : (
