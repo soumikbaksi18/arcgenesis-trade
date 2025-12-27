@@ -22,6 +22,8 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        roboto: ['Roboto', 'sans-serif'],
+        bodoni: ['Bodoni Moda', 'serif'],
       },
       boxShadow: {
         'soft': '0 4px 20px rgba(138, 87, 204, 0.08)',
