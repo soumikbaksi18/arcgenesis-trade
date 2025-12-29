@@ -5,8 +5,8 @@ import { mockStrategies } from '../../utils/mockStrategyData';
 
 export const AutomatedTrading: React.FC = () => {
   const navigate = useNavigate();
-  const [isWalletConnected, setIsWalletConnected] = useState(false); // Mock: set to false to show disabled state
-  const [hasFunds, setHasFunds] = useState(false); // Mock: set to false to show insufficient balance
+  const [isWalletConnected, setIsWalletConnected] = useState(true); // Mock: enabled for demo
+  const [hasFunds, setHasFunds] = useState(true); // Mock: enabled for demo
 
   const getRiskColor = (risk: string) => {
     switch (risk) {

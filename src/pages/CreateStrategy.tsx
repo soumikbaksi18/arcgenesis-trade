@@ -1,0 +1,82 @@
+import React, { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BlockPalette } from '../components/strategyBuilder/BlockPalette';
+import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
+import { ArrowLeft, Save, Play } from 'lucide-react';
+
+export const CreateStrategy: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleSave = () => {
+    // TODO: Save strategy
+    console.log('Saving strategy');
+    navigate('/strategies');
+  };
+
+  const handleTest = () => {
+    // TODO: Run backtest
+    console.log('Testing strategy');
+  };
+
+  return (
+    <div className="h-screen bg-black text-white font-roboto flex flex-col overflow-hidden">
+      {/* Top Banner Accent */}
+      <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
+
+      {/* Header */}
+      <div className="border-b border-white/10 bg-black/40 backdrop-blur-md relative z-10 flex-shrink-0">
+        <div className="max-w-full mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/strategies')}
+              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-white/60" />
+            </button>
+            <div>
+              <h1 className="text-xl font-bold text-white">Create Strategy</h1>
+              <div className="text-xs text-white/40">Build your automated trading workflow</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleTest}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Test
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-6 py-2 bg-yellow-500 text-black rounded-lg text-sm font-bold hover:bg-yellow-400 transition-colors flex items-center gap-2"
+            >
+              <Save className="w-4 h-4" />
+              Save Strategy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - Takes remaining height */}
+      <div className="flex-1 flex overflow-hidden relative z-10 min-h-0">
+        {/* Left: Block Palette */}
+        <div className="w-56 flex-shrink-0 h-full overflow-hidden">
+          <BlockPalette onDragStart={() => {}} />
+        </div>
+
+        {/* Center: Node Editor - Takes most space */}
+        <div className="flex-1 relative min-w-0 h-full overflow-hidden bg-[#f8fafc]">
+          <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">
+            Canvas removed
+          </div>
+        </div>
+
+        {/* Right: Chart Panel - Smaller */}
+        <div className="w-[400px] flex-shrink-0 h-full overflow-hidden">
+          <ChartPanel nodes={[]} edges={[]} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
