@@ -4,6 +4,7 @@ import { Markets } from './pages/Markets';
 import { Portfolio } from './pages/Portfolio';
 import { Trading } from './pages/Trading';
 import { Strategies } from './pages/Strategies';
+import { CreateStrategy } from './pages/CreateStrategy';
 import { Navbar } from './components/Navbar';
 import './App.css';
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="/trading/perps" element={<Trading />} />
           <Route path="/trading/options" element={<Trading />} />
           <Route path="/strategies" element={<Strategies />} />
+          <Route path="/strategies/create" element={<CreateStrategy />} />
         </Routes>
       </Router>
     </div>

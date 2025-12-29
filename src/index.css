@@ -2,6 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
+/* React Flow Styles */
+@import 'reactflow/dist/style.css';
+
+/* Hide React Flow viewport indicators */
+.react-flow__viewport {
+  background: transparent !important;
+}
+
+.react-flow__renderer {
+  background: transparent !important;
+}
+
+.react-flow__pane {
+  background: transparent !important;
+}
+
+/* Ensure ReactFlow can receive drops */
+.react-flow {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-flow__container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-flow__renderer {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-flow__pane {
+  cursor: default;
+}
+
+/* Drag and drop improvements */
+.react-flow__node {
+  cursor: grab !important;
+}
+
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+}
+
+.react-flow__node.selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Ensure nodes are draggable */
+.react-flow__node {
+  cursor: grab !important;
+}
+
+.react-flow__node.dragging {
+  cursor: grabbing !important;
+}
+
+.react-flow__node.selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Prevent handles from blocking node dragging */
+.react-flow__handle {
+  cursor: crosshair !important;
+}
+
+/* Ensure delete button doesn't interfere with dragging */
+.react-flow__node button.nopan.nodrag {
+  cursor: pointer !important;
+}
+
+/* Connection line styling */
+.react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #60a5fa;
+  stroke-width: 3;
+}
+
+/* Handle styling */
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px solid white;
+}
+
+.react-flow__handle-connecting {
+  background: #60a5fa;
+}
+
+.react-flow__handle-valid {
+  background: #10b981;
+}
+
 :root {
   /* Backgrounds - Deep Blue Theme */
   --bg-primary: rgba(10, 15, 30, 0.95);
