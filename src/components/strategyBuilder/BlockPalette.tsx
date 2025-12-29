@@ -270,6 +270,7 @@ export const BlockPalette: React.FC<{ onDragStart: (event: React.DragEvent, bloc
                     draggable={true}
                     onDragStart={(e) => {
                       e.dataTransfer.effectAllowed = 'move';
+                      e.dataTransfer.setData('application/reactflow', JSON.stringify(block));
                       onDragStart(e, block);
                     }}
                     onDragEnd={(e) => {

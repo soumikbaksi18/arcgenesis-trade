@@ -25,7 +25,7 @@ export const Navbar = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[200] bg-transparent">
+    <nav className="fixed top-0 left-0 right-0 z-[200] bg-black/80 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -48,7 +48,7 @@ export const Navbar = () => {
                   >
                     <Link
                       to={link.path}
-                      className="text-sm font-roboto font-light tracking-wide relative flex items-center gap-1"
+                      className="text-sm font-roboto font-light tracking-wide relative flex items-center gap-1.5 py-2 px-1"
                     >
                       <motion.span
                         className={`block ${
@@ -66,11 +66,11 @@ export const Navbar = () => {
                       <ChevronDown 
                         className={`w-3 h-3 transition-transform duration-200 ${
                           isTradingHovered ? 'rotate-180' : ''
-                        }`}
+                        } ${isActive(link.path) ? 'text-white' : 'text-white/50'}`}
                       />
                       {isActive(link.path) && (
                         <motion.span
-                          layoutId="navbar-underline"
+                          layoutId={`navbar-underline-${link.path}`}
                           className="absolute -bottom-1 left-0 right-0 h-px bg-white"
                           initial={false}
                           transition={{
@@ -90,7 +90,7 @@ export const Navbar = () => {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -5 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute top-full left-0 mt-4 flex flex-col space-y-1"
+                          className="absolute top-full left-0 mt-4 flex flex-col space-y-1 bg-black/95 backdrop-blur-md border border-white/10 rounded-lg p-2 min-w-[160px] z-[300]"
                         >
                           {tradingTypes.map((type) => (
                             <Link
@@ -116,7 +116,7 @@ export const Navbar = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className="text-sm font-roboto font-light tracking-wide relative"
+                  className="text-sm font-roboto font-light tracking-wide relative py-2 px-1"
                 >
                   <motion.span
                     className={`block ${
@@ -133,7 +133,7 @@ export const Navbar = () => {
                   </motion.span>
                   {isActive(link.path) && (
                     <motion.span
-                      layoutId="navbar-underline"
+                      layoutId={`navbar-underline-${link.path}`}
                       className="absolute -bottom-1 left-0 right-0 h-px bg-white"
                       initial={false}
                       transition={{

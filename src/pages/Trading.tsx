@@ -179,7 +179,7 @@ export const Trading: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black pt-16 flex flex-col text-white font-roboto overflow-hidden">
+    <div className="min-h-screen bg-black pt-20 flex flex-col text-white font-roboto overflow-hidden">
       {/* Top Banner Accent */}
       <div className="absolute top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
