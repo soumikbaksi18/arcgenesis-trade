@@ -50,7 +50,7 @@ export const Strategies: React.FC = () => {
   const totalPnLPercent = totalBalance > 0 ? (totalPnL / totalBalance) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-black pt-16 text-white font-roboto">
+    <div className="min-h-screen bg-black pt-20 text-white font-roboto">
       {/* Top Banner Accent */}
       <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
