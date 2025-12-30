@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BlockPalette, BlockDefinition } from '../components/strategyBuilder/BlockPalette';
 import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
 import { StrategyCanvas } from '../components/strategyBuilder/StrategyCanvas';
+import { NodePropertiesPanel } from '../components/strategyBuilder/NodePropertiesPanel';
 import { ArrowLeft, Save, Play } from 'lucide-react';
 import type { Node, Edge } from 'reactflow';
 
@@ -13,6 +14,7 @@ export const CreateStrategy: React.FC = () => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
 
   const handleDragStart = (event: React.DragEvent, block: BlockDefinition) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
@@ -28,6 +30,27 @@ export const CreateStrategy: React.FC = () => {
   const handleTest = () => {
     // TODO: Run backtest
     console.log('Testing strategy');
+  };
+
+  const handleNodeSelect = (node: Node | null) => {
+    setSelectedNode(node);
+  };
+
+  const handleUpdateNode = (nodeId: string, data: any) => {
+    // Update parent's nodes state
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
+        node.id === nodeId ? { ...node, data } : node
+      )
+    );
+    // Also update StrategyCanvas internal state via exposed function
+    if ((window as any).__strategyCanvasUpdateNode) {
+      (window as any).__strategyCanvasUpdateNode(nodeId, data);
+    }
+    // Update selected node if it's the one being updated
+    if (selectedNode && selectedNode.id === nodeId) {
+      setSelectedNode({ ...selectedNode, data });
+    }
   };
 
   return (
@@ -90,7 +113,7 @@ export const CreateStrategy: React.FC = () => {
 
         {/* Center: Node Editor - Resizable with right pane */}
         <div
-          className="h-full overflow-hidden bg-[#f8fafc] border-r border-slate-200"
+          className="h-full overflow-hidden bg-[#f8fafc] border-r border-slate-200 relative"
           style={{ flexBasis: `${split}%` }}
           onDragOver={(e) => {
             e.preventDefault(); // Allow drop
@@ -99,7 +122,46 @@ export const CreateStrategy: React.FC = () => {
           <StrategyCanvas
             onNodesChange={setNodes}
             onEdgesChange={setEdges}
+            selectedNode={selectedNode}
+            onNodeSelect={handleNodeSelect}
+            onUpdateNode={(nodeId, data) => {
+              handleUpdateNode(nodeId, data);
+              // Also update selected node if it's the one being updated
+              if (selectedNode && selectedNode.id === nodeId) {
+                setSelectedNode({ ...selectedNode, data });
+              }
+            }}
           />
+          {selectedNode && (() => {
+            // Always get the latest node from nodes array
+            const currentNode = nodes.find(n => n.id === selectedNode.id);
+            if (!currentNode) return null;
+            
+            return (
+              <NodePropertiesPanel
+                key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
+                node={currentNode}
+                onClose={() => setSelectedNode(null)}
+                onUpdateNode={(nodeId, data) => {
+                  // Update nodes state
+                  setNodes((currentNodes) => {
+                    const updatedNodes = currentNodes.map((n) =>
+                      n.id === nodeId ? { ...n, data } : n
+                    );
+                    // Update selectedNode if it's the one being updated
+                    const updatedNode = updatedNodes.find(n => n.id === nodeId);
+                    if (updatedNode && selectedNode.id === nodeId) {
+                      // Use setTimeout to update selectedNode after state update
+                      setTimeout(() => setSelectedNode({ ...updatedNode }), 0);
+                    }
+                    return updatedNodes;
+                  });
+                  // Also call handleUpdateNode for other updates
+                  handleUpdateNode(nodeId, data);
+                }}
+              />
+            );
+          })()}
         </div>
 
         {/* Drag handle between center and right */}

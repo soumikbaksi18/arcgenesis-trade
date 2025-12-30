@@ -23,11 +23,17 @@ const nodeTypes: NodeTypes = {
 interface StrategyCanvasProps {
   onNodesChange?: (nodes: Node[]) => void;
   onEdgesChange?: (edges: Edge[]) => void;
+  selectedNode?: Node | null;
+  onNodeSelect?: (node: Node | null) => void;
+  onUpdateNode?: (nodeId: string, data: any) => void;
 }
 
 export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
   onNodesChange: externalOnNodesChange,
   onEdgesChange: externalOnEdgesChange,
+  selectedNode,
+  onNodeSelect,
+  onUpdateNode,
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -52,11 +58,21 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
   // Notify parent of changes
   React.useEffect(() => {
     externalOnNodesChange?.(nodes);
-  }, [nodes, externalOnNodesChange]);
+  }, [nodes, externalOnEdgesChange]);
 
   React.useEffect(() => {
     externalOnEdgesChange?.(edges);
   }, [edges, externalOnEdgesChange]);
+
+  // Update selected node when nodes change (to keep it in sync)
+  React.useEffect(() => {
+    if (selectedNode) {
+      const updatedNode = nodes.find(n => n.id === selectedNode.id);
+      if (updatedNode && updatedNode !== selectedNode) {
+        onNodeSelect?.(updatedNode);
+      }
+    }
+  }, [nodes, selectedNode, onNodeSelect]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -119,6 +135,14 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
         // Ensure unique ID
         const nodeId = `${block.type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+        // Initialize params with defaults, and for Pool nodes, fetch active trading pair
+        let initialParams = { ...(block.params || {}) };
+        if (block.type === 'Pool') {
+          // Fetch from localStorage (set by Trading page) or use default
+          const activePool = localStorage.getItem('activeTradingPair') || 'ETH/USD';
+          initialParams.pool = activePool;
+        }
+
         const newNode: Node = {
           id: nodeId,
           type: 'custom',
@@ -128,7 +152,7 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
             type: block.type,
             inputs: block.inputs || [],
             outputs: block.outputs || [],
-            params: block.params || {},
+            params: initialParams,
           },
         };
 
@@ -157,9 +181,40 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
           (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
         )
       );
+      // Clear selection if deleted node was selected
+      if (onNodeSelect && selectedNode && deletedIds.has(selectedNode.id)) {
+        onNodeSelect(null);
+      }
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, selectedNode, onNodeSelect]
   );
+
+  const handleNodeClick = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      onNodeSelect?.(node);
+    },
+    [onNodeSelect]
+  );
+
+  const handlePaneClick = useCallback(() => {
+    onNodeSelect?.(null);
+  }, [onNodeSelect]);
+
+  // Handle node updates from properties panel (via parent callback)
+  React.useEffect(() => {
+    if (onUpdateNode) {
+      // Store update function to be called from parent
+      (window as any).__strategyCanvasUpdateNode = (nodeId: string, data: any) => {
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === nodeId
+              ? { ...node, data }
+              : node
+          )
+        );
+      };
+    }
+  }, [setNodes, onUpdateNode]);
 
   return (
     <ReactFlowProvider>
@@ -172,6 +227,8 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
         onInit={setReactFlowInstance}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onNodeClick={handleNodeClick}
+        onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes}
         fitView={nodes.length > 0}
         fitViewOptions={{ padding: 0.3, maxZoom: 1.5, minZoom: 0.4 }}
