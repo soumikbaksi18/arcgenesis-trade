@@ -4,17 +4,36 @@ import { BlockPalette, BlockDefinition } from '../components/strategyBuilder/Blo
 import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
 import { StrategyCanvas } from '../components/strategyBuilder/StrategyCanvas';
 import { NodePropertiesPanel } from '../components/strategyBuilder/NodePropertiesPanel';
-import { ArrowLeft, Save, Play } from 'lucide-react';
-import type { Node, Edge } from 'reactflow';
+import { JsonModal } from '../components/strategyBuilder/JsonModal';
+import { SaveStrategyModal } from '../components/strategyBuilder/SaveStrategyModal';
+import { ArrowLeft, Save, Play, FileJson } from 'lucide-react';
+import { useStrategyStore } from '../stores/strategyStore';
+import { useStrategiesStore } from '../stores/strategiesStore';
 
 export const CreateStrategy: React.FC = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [split, setSplit] = useState<number>(60); // percent for center area vs. right
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  
+  // Zustand stores
+  const {
+    nodes,
+    edges,
+    selectedNode,
+    showJsonModal,
+    apiPayload,
+    setNodes,
+    setEdges,
+    setSelectedNode,
+    updateNode,
+    setShowJsonModal,
+    generateApiPayload,
+    setApiPayload,
+  } = useStrategyStore();
+
+  const addStrategy = useStrategiesStore((state) => state.addStrategy);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   const handleDragStart = (event: React.DragEvent, block: BlockDefinition) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
@@ -22,8 +41,65 @@ export const CreateStrategy: React.FC = () => {
   };
 
   const handleSave = () => {
-    // TODO: Save strategy
-    console.log('Saving strategy');
+    // Generate API payload first if not already generated
+    if (!apiPayload) {
+      generateApiPayload();
+    }
+    // Show save modal
+    setShowSaveModal(true);
+  };
+
+  const handleSaveStrategy = (strategyData: {
+    name: string;
+    description: string;
+    marketPair: string;
+    riskLevel: 'Low' | 'Medium' | 'High';
+    minInvestment?: number;
+    trades24h?: number;
+    drawdown7d?: number;
+  }) => {
+    if (!apiPayload) {
+      alert('Please generate the API payload first');
+      return;
+    }
+
+    // Create strategy object with static defaults for missing fields
+    const newStrategy = {
+      name: strategyData.name,
+      type: 'Custom' as const,
+      marketPair: strategyData.marketPair,
+      riskLevel: strategyData.riskLevel,
+      description: strategyData.description,
+      creator: 'You',
+      isMyStrategy: true,
+      isVerified: false,
+      followers: 0,
+      // Static defaults (can be updated later)
+      pnl30d: 0,
+      pnlUSD: 0,
+      drawdown30d: strategyData.drawdown7d || 0,
+      roi: 0,
+      runtime: '0d 0h',
+      minInvestment: strategyData.minInvestment,
+      trades24h: strategyData.trades24h || 0,
+      totalTrades: 0,
+      sharpeRatio: 0,
+      aum: strategyData.minInvestment || 0,
+      performanceData: [0],
+      direction: 'Neutral' as const,
+      leverage: 1,
+      status: 'active' as const,
+      // Store workflow data
+      nodes,
+      edges,
+      apiPayload,
+    };
+
+    // Save to Zustand store
+    addStrategy(newStrategy);
+
+    // Close modal and navigate
+    setShowSaveModal(false);
     navigate('/strategies');
   };
 
@@ -32,25 +108,16 @@ export const CreateStrategy: React.FC = () => {
     console.log('Testing strategy');
   };
 
-  const handleNodeSelect = (node: Node | null) => {
-    setSelectedNode(node);
+  const handleShowJson = () => {
+    // Generate JSON from current canvas nodes - this will also open the modal
+    generateApiPayload();
   };
 
-  const handleUpdateNode = (nodeId: string, data: any) => {
-    // Update parent's nodes state
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === nodeId ? { ...node, data } : node
-      )
-    );
-    // Also update StrategyCanvas internal state via exposed function
-    if ((window as any).__strategyCanvasUpdateNode) {
-      (window as any).__strategyCanvasUpdateNode(nodeId, data);
-    }
-    // Update selected node if it's the one being updated
-    if (selectedNode && selectedNode.id === nodeId) {
-      setSelectedNode({ ...selectedNode, data });
-    }
+  const handleSaveJson = (updatedPayload: any) => {
+    setApiPayload(updatedPayload);
+    // Here you could update nodes based on the JSON if needed
+    // For now, we just store it for the API call
+    console.log('Updated API Payload:', updatedPayload);
   };
 
   return (
@@ -74,6 +141,13 @@ export const CreateStrategy: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleShowJson}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+            >
+              <FileJson className="w-4 h-4" />
+              JSON
+            </button>
             <button
               onClick={handleTest}
               className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
@@ -119,19 +193,7 @@ export const CreateStrategy: React.FC = () => {
             e.preventDefault(); // Allow drop
           }}
         >
-          <StrategyCanvas
-            onNodesChange={setNodes}
-            onEdgesChange={setEdges}
-            selectedNode={selectedNode}
-            onNodeSelect={handleNodeSelect}
-            onUpdateNode={(nodeId, data) => {
-              handleUpdateNode(nodeId, data);
-              // Also update selected node if it's the one being updated
-              if (selectedNode && selectedNode.id === nodeId) {
-                setSelectedNode({ ...selectedNode, data });
-              }
-            }}
-          />
+          <StrategyCanvas />
           {selectedNode && (() => {
             // Always get the latest node from nodes array
             const currentNode = nodes.find(n => n.id === selectedNode.id);
@@ -142,23 +204,7 @@ export const CreateStrategy: React.FC = () => {
                 key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
                 node={currentNode}
                 onClose={() => setSelectedNode(null)}
-                onUpdateNode={(nodeId, data) => {
-                  // Update nodes state
-                  setNodes((currentNodes) => {
-                    const updatedNodes = currentNodes.map((n) =>
-                      n.id === nodeId ? { ...n, data } : n
-                    );
-                    // Update selectedNode if it's the one being updated
-                    const updatedNode = updatedNodes.find(n => n.id === nodeId);
-                    if (updatedNode && selectedNode.id === nodeId) {
-                      // Use setTimeout to update selectedNode after state update
-                      setTimeout(() => setSelectedNode({ ...updatedNode }), 0);
-                    }
-                    return updatedNodes;
-                  });
-                  // Also call handleUpdateNode for other updates
-                  handleUpdateNode(nodeId, data);
-                }}
+                onUpdateNode={updateNode}
               />
             );
           })()}
@@ -180,9 +226,26 @@ export const CreateStrategy: React.FC = () => {
           className="h-full overflow-hidden bg-black"
           style={{ flexBasis: `${100 - split}%` }}
         >
-          <ChartPanel nodes={nodes} edges={edges} />
+          <ChartPanel />
         </div>
       </div>
+
+      {/* JSON Modal */}
+      <JsonModal
+        isOpen={showJsonModal}
+        onClose={() => setShowJsonModal(false)}
+        onSave={handleSaveJson}
+      />
+
+      {/* Save Strategy Modal */}
+      {apiPayload && (
+        <SaveStrategyModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveStrategy}
+          apiPayload={apiPayload}
+        />
+      )}
     </div>
   );
 };

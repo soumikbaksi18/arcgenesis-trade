@@ -1,12 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import { TrendingUp, Play, Pause, Square } from 'lucide-react';
+import { useStrategyStore } from '../../stores/strategyStore';
 
-interface ChartPanelProps {
-  nodes: any[];
-  edges: any[];
-}
-
-export const ChartPanel: React.FC<ChartPanelProps> = ({ nodes, edges }) => {
+export const ChartPanel: React.FC = () => {
+  const { nodes, edges } = useStrategyStore();
   const chartRef = useRef<HTMLDivElement>(null);
   const [isSimulating, setIsSimulating] = React.useState(false);
 
