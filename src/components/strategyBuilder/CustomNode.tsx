@@ -3,7 +3,9 @@ import { Handle, Position, NodeProps, useReactFlow } from 'reactflow';
 import { 
   Play, TrendingUp, TrendingDown, BarChart3, 
   Activity, ArrowUpDown, DollarSign, Shield,
-  Clock, Zap, X
+  Clock, Zap, X, Brain, Sparkles, Bot, MessageSquare,
+  Hash, Network, Layers, Target, BarChart2, Gauge,
+  RotateCcw, Activity as ActivityIcon
 } from 'lucide-react';
 
 const iconMap: { [key: string]: React.ReactNode } = {
@@ -25,6 +27,28 @@ const iconMap: { [key: string]: React.ReactNode } = {
   TakeProfit: <Shield className="w-4 h-4" />,
   MaxPositionSize: <Shield className="w-4 h-4" />,
   Cooldown: <Clock className="w-4 h-4" />,
+  // AI Models
+  DeepSeekChat: <Brain className="w-4 h-4" />,
+  Qwen3Max: <Sparkles className="w-4 h-4" />,
+  ClaudeSonnet: <Bot className="w-4 h-4" />,
+  Grok4: <Sparkles className="w-4 h-4" />,
+  GeminiPro: <Brain className="w-4 h-4" />,
+  ChatGPT: <Brain className="w-4 h-4" />,
+  // Social Media
+  X: <MessageSquare className="w-4 h-4" />,
+  Reddit: <Hash className="w-4 h-4" />,
+  Telegram: <MessageSquare className="w-4 h-4" />,
+  // Algorithms
+  FundingRateArbitrage: <ArrowUpDown className="w-4 h-4" />,
+  MarketMaking: <Target className="w-4 h-4" />,
+  StatisticalArbitrage: <BarChart2 className="w-4 h-4" />,
+  TrendFollowing: <TrendingUp className="w-4 h-4" />,
+  PortfolioOptimization: <Gauge className="w-4 h-4" />,
+  OrderBookImbalance: <BarChart3 className="w-4 h-4" />,
+  MeanReversion: <RotateCcw className="w-4 h-4" />,
+  SignalEnsemble: <Network className="w-4 h-4" />,
+  LSTM: <Layers className="w-4 h-4" />,
+  ReinforcementLearning: <ActivityIcon className="w-4 h-4" />,
 };
 
 const colorMap: { [key: string]: string } = {
@@ -46,6 +70,28 @@ const colorMap: { [key: string]: string } = {
   TakeProfit: 'bg-orange-500',
   MaxPositionSize: 'bg-orange-500',
   Cooldown: 'bg-gray-500',
+  // AI Models
+  DeepSeekChat: 'bg-indigo-500',
+  Qwen3Max: 'bg-indigo-500',
+  ClaudeSonnet: 'bg-indigo-500',
+  Grok4: 'bg-indigo-500',
+  GeminiPro: 'bg-indigo-500',
+  ChatGPT: 'bg-indigo-500',
+  // Social Media
+  X: 'bg-sky-500',
+  Reddit: 'bg-orange-500',
+  Telegram: 'bg-blue-500',
+  // Algorithms
+  FundingRateArbitrage: 'bg-pink-500',
+  MarketMaking: 'bg-pink-500',
+  StatisticalArbitrage: 'bg-pink-500',
+  TrendFollowing: 'bg-pink-500',
+  PortfolioOptimization: 'bg-pink-500',
+  OrderBookImbalance: 'bg-pink-500',
+  MeanReversion: 'bg-pink-500',
+  SignalEnsemble: 'bg-pink-500',
+  LSTM: 'bg-pink-500',
+  ReinforcementLearning: 'bg-pink-500',
 };
 
 const CustomNodeComponent: React.FC<NodeProps> = ({ data, selected, id, dragging }) => {
