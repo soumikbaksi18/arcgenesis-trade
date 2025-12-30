@@ -4,13 +4,14 @@ import {
   Activity, ArrowUpDown, DollarSign, Shield,
   Clock, Zap, Brain, Sparkles, Bot, MessageSquare,
   Hash, Network, Layers, Target,
-  BarChart2, Gauge, RotateCcw, Activity as ActivityIcon
+  BarChart2, Gauge, RotateCcw, Activity as ActivityIcon,
+  Droplets, CreditCard, AlertTriangle
 } from 'lucide-react';
 
 export interface BlockDefinition {
   id: string;
   type: string;
-  category: 'trigger' | 'market' | 'indicator' | 'condition' | 'action' | 'risk' | 'utility' | 'ai-model' | 'social-media' | 'algorithm';
+  category: 'trigger' | 'market' | 'indicator' | 'condition' | 'action' | 'risk' | 'utility' | 'ai-model' | 'social-media' | 'algorithm' | 'investment';
   label: string;
   icon: React.ReactNode;
   color: string;
@@ -30,7 +31,7 @@ export const blockDefinitions: BlockDefinition[] = [
     icon: <Play className="w-4 h-4" />,
     color: 'bg-purple-500',
     description: 'Triggers when a candle closes',
-    inputs: [],
+    inputs: ['input1', 'input2', 'input3', 'input4'], // 4 inputs for 4 sides
     outputs: ['trigger'],
     params: { timeframe: '15m' },
   },
@@ -42,7 +43,7 @@ export const blockDefinitions: BlockDefinition[] = [
     icon: <Zap className="w-4 h-4" />,
     color: 'bg-purple-500',
     description: 'Triggers on price change',
-    inputs: [],
+    inputs: ['input1', 'input2', 'input3', 'input4'], // 4 inputs for 4 sides
     outputs: ['trigger'],
   },
   
@@ -478,16 +479,54 @@ export const blockDefinitions: BlockDefinition[] = [
     outputs: ['action'],
     params: { algorithm: 'PPO', episodes: 1000 },
   },
+  
+  // Investment
+  {
+    id: 'investment-pool',
+    type: 'Pool',
+    category: 'investment',
+    label: 'Pool',
+    icon: <Droplets className="w-4 h-4" />,
+    color: 'bg-cyan-500',
+    description: 'Liquidity pool allocation strategy',
+    inputs: ['input1', 'input2'], // 2 inputs
+    outputs: ['output1', 'output2'], // 2 outputs
+    params: { pool: 'ETH/USD' }, // Will be fetched from trade view
+  },
+  {
+    id: 'investment-payment',
+    type: 'Payment',
+    category: 'investment',
+    label: 'Payment',
+    icon: <CreditCard className="w-4 h-4" />,
+    color: 'bg-cyan-500',
+    description: 'Payment processing and distribution',
+    inputs: ['input1', 'input2'], // 2 inputs
+    outputs: ['output1', 'output2'], // 2 outputs
+    params: { stablecoin: 'USDC', amount: 1000 },
+  },
+  {
+    id: 'investment-risk',
+    type: 'InvestmentRisk',
+    category: 'investment',
+    label: 'Risk',
+    icon: <AlertTriangle className="w-4 h-4" />,
+    color: 'bg-cyan-500',
+    description: 'Investment risk assessment and limits',
+    inputs: ['input1', 'input2'], // 2 inputs
+    outputs: ['output1', 'output2'], // 2 outputs
+    params: { riskLevel: 'medium' },
+  },
 ];
 
 export const BlockPalette: React.FC<{ onDragStart: (event: React.DragEvent, block: BlockDefinition) => void }> = ({ onDragStart }) => {
   const categories = [
-    { name: 'AI Models', blocks: blockDefinitions.filter(b => b.category === 'ai-model') },
-    { name: 'Social Media', blocks: blockDefinitions.filter(b => b.category === 'social-media') },
-    { name: 'Quant Algorithms', blocks: blockDefinitions.filter(b => b.category === 'algorithm') },
+    { name: 'Investment', blocks: blockDefinitions.filter(b => b.category === 'investment') },
     { name: 'Triggers', blocks: blockDefinitions.filter(b => b.category === 'trigger') },
     { name: 'Market Data', blocks: blockDefinitions.filter(b => b.category === 'market') },
-    { name: 'Indicators', blocks: blockDefinitions.filter(b => b.category === 'indicator') },
+    { name: 'AI Models', blocks: blockDefinitions.filter(b => b.category === 'ai-model') },
+    { name: 'Quant Algorithms', blocks: blockDefinitions.filter(b => b.category === 'algorithm') },
+    { name: 'Social Media', blocks: blockDefinitions.filter(b => b.category === 'social-media') },
     { name: 'Conditions', blocks: blockDefinitions.filter(b => b.category === 'condition') },
     { name: 'Actions', blocks: blockDefinitions.filter(b => b.category === 'action') },
     { name: 'Risk Management', blocks: blockDefinitions.filter(b => b.category === 'risk') },
