@@ -1,78 +1,57 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import ReactFlow, {
   Node,
   Edge,
   addEdge,
   Connection,
-  useNodesState,
-  useEdgesState,
   Background,
   Controls,
   ReactFlowProvider,
   NodeTypes,
+  applyNodeChanges,
+  applyEdgeChanges,
+  NodeChange,
+  EdgeChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { CustomNode } from './CustomNode';
 import { BlockDefinition } from './BlockPalette';
-import { initialNodes, initialEdges } from '../../utils/initialStrategyNodes';
+import { useStrategyStore } from '../../stores/strategyStore';
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
 };
 
-interface StrategyCanvasProps {
-  onNodesChange?: (nodes: Node[]) => void;
-  onEdgesChange?: (edges: Edge[]) => void;
-  selectedNode?: Node | null;
-  onNodeSelect?: (node: Node | null) => void;
-  onUpdateNode?: (nodeId: string, data: any) => void;
-}
-
-export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
-  onNodesChange: externalOnNodesChange,
-  onEdgesChange: externalOnEdgesChange,
-  selectedNode,
-  onNodeSelect,
-  onUpdateNode,
-}) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+export const StrategyCanvas: React.FC = () => {
+  const { nodes, edges, selectedNode, setNodes, setEdges, setSelectedNode } = useStrategyStore();
   const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
 
-  // Internal handler for node changes
-  const handleNodesChange = useCallback(
-    (changes: any) => {
-      onNodesChange(changes);
+  // Sync ReactFlow nodes/edges with Zustand store
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const newNodes = applyNodeChanges(changes, nodes);
+      setNodes(newNodes);
     },
-    [onNodesChange]
+    [nodes, setNodes]
   );
 
-  // Internal handler for edge changes
-  const handleEdgesChange = useCallback(
-    (changes: any) => {
-      onEdgesChange(changes);
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      const newEdges = applyEdgeChanges(changes, edges);
+      setEdges(newEdges);
     },
-    [onEdgesChange]
+    [edges, setEdges]
   );
-
-  // Notify parent of changes
-  React.useEffect(() => {
-    externalOnNodesChange?.(nodes);
-  }, [nodes, externalOnEdgesChange]);
-
-  React.useEffect(() => {
-    externalOnEdgesChange?.(edges);
-  }, [edges, externalOnEdgesChange]);
 
   // Update selected node when nodes change (to keep it in sync)
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedNode) {
       const updatedNode = nodes.find(n => n.id === selectedNode.id);
       if (updatedNode && updatedNode !== selectedNode) {
-        onNodeSelect?.(updatedNode);
+        setSelectedNode(updatedNode);
       }
     }
-  }, [nodes, selectedNode, onNodeSelect]);
+  }, [nodes, selectedNode, setSelectedNode]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -82,23 +61,23 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
         return;
       }
 
-      setEdges((eds) => {
-        // Check for duplicate edges
-        const exists = eds.find(
-          (e) =>
-            e.source === params.source &&
-            e.target === params.target &&
-            e.sourceHandle === params.sourceHandle &&
-            e.targetHandle === params.targetHandle
-        );
-        if (exists) {
-          console.warn('Edge already exists');
-          return eds;
-        }
-        return addEdge(params, eds);
-      });
+      // Check for duplicate edges
+      const exists = edges.find(
+        (e) =>
+          e.source === params.source &&
+          e.target === params.target &&
+          e.sourceHandle === params.sourceHandle &&
+          e.targetHandle === params.targetHandle
+      );
+      if (exists) {
+        console.warn('Edge already exists');
+        return;
+      }
+      
+      const newEdges = addEdge(params, edges);
+      setEdges(newEdges);
     },
-    [setEdges]
+    [edges, setEdges]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -156,73 +135,54 @@ export const StrategyCanvas: React.FC<StrategyCanvasProps> = ({
           },
         };
 
-        setNodes((nds) => {
-          // Check for duplicates
-          const exists = nds.find((n) => n.id === nodeId);
-          if (exists) {
-            console.warn('Node with same ID already exists');
-            return nds;
-          }
-          return nds.concat(newNode);
-        });
+        // Check for duplicates
+        const exists = nodes.find((n) => n.id === nodeId);
+        if (exists) {
+          console.warn('Node with same ID already exists');
+          return;
+        }
+        
+        setNodes([...nodes, newNode]);
       } catch (error) {
         console.error('Error dropping node:', error);
       }
     },
-    [reactFlowInstance, setNodes]
+    [reactFlowInstance, nodes, setNodes]
   );
 
   const handleNodesDelete = useCallback(
     (nodesToDelete: Node[]) => {
       const deletedIds = new Set(nodesToDelete.map(n => n.id));
-      setNodes((nds) => nds.filter((node) => !deletedIds.has(node.id)));
-      setEdges((eds) =>
-        eds.filter(
-          (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
-        )
-      );
+      setNodes(nodes.filter((node) => !deletedIds.has(node.id)));
+      setEdges(edges.filter(
+        (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
+      ));
       // Clear selection if deleted node was selected
-      if (onNodeSelect && selectedNode && deletedIds.has(selectedNode.id)) {
-        onNodeSelect(null);
+      if (selectedNode && deletedIds.has(selectedNode.id)) {
+        setSelectedNode(null);
       }
     },
-    [setNodes, setEdges, selectedNode, onNodeSelect]
+    [nodes, edges, selectedNode, setNodes, setEdges, setSelectedNode]
   );
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
-      onNodeSelect?.(node);
+      setSelectedNode(node);
     },
-    [onNodeSelect]
+    [setSelectedNode]
   );
 
   const handlePaneClick = useCallback(() => {
-    onNodeSelect?.(null);
-  }, [onNodeSelect]);
-
-  // Handle node updates from properties panel (via parent callback)
-  React.useEffect(() => {
-    if (onUpdateNode) {
-      // Store update function to be called from parent
-      (window as any).__strategyCanvasUpdateNode = (nodeId: string, data: any) => {
-        setNodes((nds) =>
-          nds.map((node) =>
-            node.id === nodeId
-              ? { ...node, data }
-              : node
-          )
-        );
-      };
-    }
-  }, [setNodes, onUpdateNode]);
+    setSelectedNode(null);
+  }, [setSelectedNode]);
 
   return (
     <ReactFlowProvider>
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={handleEdgesChange}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onInit={setReactFlowInstance}
         onDrop={onDrop}

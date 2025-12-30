@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, ChevronDown, TrendingUp, Plus, Settings, RefreshCw, List } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { mockMyStrategies, mockMarketplaceStrategies, Strategy } from '../utils/mockStrategyData';
 import { StrategyCard } from '../components/strategies/StrategyCard';
+import { useStrategiesStore } from '../stores/strategiesStore';
 
 export const Strategies: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +14,43 @@ export const Strategies: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('Top PNL');
   const [timeframe, setTimeframe] = useState<string>('30 Days');
 
-  const strategies = activeTab === 'my' ? mockMyStrategies : mockMarketplaceStrategies;
+  // Get saved strategies from Zustand store
+  const savedStrategies = useStrategiesStore((state) => state.strategies);
+
+  // Combine mock strategies with saved strategies for "My Strategies"
+  const myStrategies = useMemo(() => {
+    // Convert saved strategies to Strategy format (exclude nodes/edges/apiPayload)
+    const convertedSavedStrategies: Strategy[] = savedStrategies.map((s) => ({
+      id: s.id,
+      name: s.name,
+      type: s.type,
+      marketPair: s.marketPair,
+      riskLevel: s.riskLevel,
+      pnl30d: s.pnl30d,
+      pnlUSD: s.pnlUSD,
+      drawdown30d: s.drawdown30d,
+      roi: s.roi,
+      description: s.description,
+      creator: s.creator,
+      creatorAvatar: s.creatorAvatar,
+      followers: s.followers,
+      isVerified: s.isVerified,
+      isMyStrategy: s.isMyStrategy,
+      runtime: s.runtime,
+      minInvestment: s.minInvestment,
+      trades24h: s.trades24h,
+      totalTrades: s.totalTrades,
+      sharpeRatio: s.sharpeRatio,
+      aum: s.aum,
+      performanceData: s.performanceData,
+      direction: s.direction,
+      leverage: s.leverage,
+      status: s.status,
+    }));
+    return [...mockMyStrategies, ...convertedSavedStrategies];
+  }, [savedStrategies]);
+
+  const strategies = activeTab === 'my' ? myStrategies : mockMarketplaceStrategies;
   const strategyTypes = ['All', 'Grid', 'DCA', 'Trend', 'Arbitrage', 'Rebalancing', 'Custom'];
 
   // Filter strategies
@@ -45,8 +82,8 @@ export const Strategies: React.FC = () => {
     navigate(`/strategies/${id}/deploy`);
   };
 
-  const totalBalance = mockMyStrategies.reduce((sum, s) => sum + (s.aum || 0), 0);
-  const totalPnL = mockMyStrategies.reduce((sum, s) => sum + s.pnlUSD, 0);
+  const totalBalance = myStrategies.reduce((sum, s) => sum + (s.aum || 0), 0);
+  const totalPnL = myStrategies.reduce((sum, s) => sum + s.pnlUSD, 0);
   const totalPnLPercent = totalBalance > 0 ? (totalPnL / totalBalance) * 100 : 0;
 
   return (
