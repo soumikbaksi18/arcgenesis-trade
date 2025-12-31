@@ -1,6 +1,6 @@
-# Sentenex - Sentiment Catcher & On-Chain Data Analyzer for Aptos Perp DEX
+# Sentenex - Sentiment Catcher & On-Chain Data Analyzer for Perp DEX
 
-A FastAPI-based real-time trading analyzer that combines market data, AI-powered sentiment analysis, and on-chain metrics to provide LONG/SHORT/HOLD recommendations for perpetual DEX trading on Aptos.
+A FastAPI-based real-time trading analyzer that combines market data, AI-powered sentiment analysis, and on-chain metrics to provide LONG/SHORT/HOLD recommendations for perpetual DEX trading. 
 
 ## Features
 
@@ -8,7 +8,7 @@ A FastAPI-based real-time trading analyzer that combines market data, AI-powered
 - 🔄 **Real-time WebSocket Streaming**: Get recommendations every second
 - 📊 **Real-time Market Data**: Fetches live price, volume, and market cap from CoinMarketCap
 - 🤖 **AI Sentiment Analysis**: Uses OpenAI GPT-4 to analyze market sentiment
-- ⛓️ **On-Chain Analysis**: Analyzes Aptos blockchain data for trading signals
+- ⛓️ **On-Chain Analysis**: Analyzes blockchain data for trading signals
 - 🎯 **Smart Recommendations**: Combines all signals to suggest LONG, SHORT, or HOLD
 - 💰 **Perp DEX Integration**: Provides leverage suggestions and calculates potential PnL based on your token amount
 
@@ -217,7 +217,7 @@ curl -X POST "http://localhost:8000/api/analyze" \
 - Assesses risk levels (Low/Medium/High)
 
 ### 3. On-Chain Analysis
-- Analyzes Aptos blockchain activity
+- Analyzes blockchain activity
 - Tracks transaction volume and liquidity metrics
 - Generates on-chain trading signals
 
@@ -239,7 +239,7 @@ Sentenex/
 ├── main.py                # CLI version (legacy)
 ├── market_data.py         # CoinMarketCap API integration
 ├── sentiment_analyzer.py  # OpenAI sentiment analysis
-├── aptos_analyzer.py      # Aptos on-chain data analysis
+├── aptos_analyzer.py      # on-chain data analysis
 ├── decision_engine.py     # Signal combination and recommendation engine
 ├── test_client.py         # Test client for WebSocket and REST endpoints
 ├── requirements.txt       # Python dependencies
