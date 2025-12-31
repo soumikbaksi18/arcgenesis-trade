@@ -1,15 +1,105 @@
-import React, { useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BlockPalette } from '../components/strategyBuilder/BlockPalette';
+import { BlockPalette, BlockDefinition } from '../components/strategyBuilder/BlockPalette';
 import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
-import { ArrowLeft, Save, Play } from 'lucide-react';
+import { StrategyCanvas } from '../components/strategyBuilder/StrategyCanvas';
+import { NodePropertiesPanel } from '../components/strategyBuilder/NodePropertiesPanel';
+import { JsonModal } from '../components/strategyBuilder/JsonModal';
+import { SaveStrategyModal } from '../components/strategyBuilder/SaveStrategyModal';
+import { ArrowLeft, Save, Play, FileJson } from 'lucide-react';
+import { useStrategyStore } from '../stores/strategyStore';
+import { useStrategiesStore } from '../stores/strategiesStore';
 
 export const CreateStrategy: React.FC = () => {
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [split, setSplit] = useState<number>(60); // percent for center area vs. right
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  
+  // Zustand stores
+  const {
+    nodes,
+    edges,
+    selectedNode,
+    showJsonModal,
+    apiPayload,
+    setNodes,
+    setEdges,
+    setSelectedNode,
+    updateNode,
+    setShowJsonModal,
+    generateApiPayload,
+    setApiPayload,
+  } = useStrategyStore();
+
+  const addStrategy = useStrategiesStore((state) => state.addStrategy);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
+  const handleDragStart = (event: React.DragEvent, block: BlockDefinition) => {
+    event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
+    event.dataTransfer.effectAllowed = 'move';
+  };
 
   const handleSave = () => {
-    // TODO: Save strategy
-    console.log('Saving strategy');
+    // Generate API payload first if not already generated
+    if (!apiPayload) {
+      generateApiPayload();
+    }
+    // Show save modal
+    setShowSaveModal(true);
+  };
+
+  const handleSaveStrategy = (strategyData: {
+    name: string;
+    description: string;
+    marketPair: string;
+    riskLevel: 'Low' | 'Medium' | 'High';
+    minInvestment?: number;
+    trades24h?: number;
+    drawdown7d?: number;
+  }) => {
+    if (!apiPayload) {
+      alert('Please generate the API payload first');
+      return;
+    }
+
+    // Create strategy object with static defaults for missing fields
+    const newStrategy = {
+      name: strategyData.name,
+      type: 'Custom' as const,
+      marketPair: strategyData.marketPair,
+      riskLevel: strategyData.riskLevel,
+      description: strategyData.description,
+      creator: 'You',
+      isMyStrategy: true,
+      isVerified: false,
+      followers: 0,
+      // Static defaults (can be updated later)
+      pnl30d: 0,
+      pnlUSD: 0,
+      drawdown30d: strategyData.drawdown7d || 0,
+      roi: 0,
+      runtime: '0d 0h',
+      minInvestment: strategyData.minInvestment,
+      trades24h: strategyData.trades24h || 0,
+      totalTrades: 0,
+      sharpeRatio: 0,
+      aum: strategyData.minInvestment || 0,
+      performanceData: [0],
+      direction: 'Neutral' as const,
+      leverage: 1,
+      status: 'active' as const,
+      // Store workflow data
+      nodes,
+      edges,
+      apiPayload,
+    };
+
+    // Save to Zustand store
+    addStrategy(newStrategy);
+
+    // Close modal and navigate
+    setShowSaveModal(false);
     navigate('/strategies');
   };
 
@@ -18,10 +108,22 @@ export const CreateStrategy: React.FC = () => {
     console.log('Testing strategy');
   };
 
+  const handleShowJson = () => {
+    // Generate JSON from current canvas nodes - this will also open the modal
+    generateApiPayload();
+  };
+
+  const handleSaveJson = (updatedPayload: any) => {
+    setApiPayload(updatedPayload);
+    // Here you could update nodes based on the JSON if needed
+    // For now, we just store it for the API call
+    console.log('Updated API Payload:', updatedPayload);
+  };
+
   return (
-    <div className="h-screen bg-black text-white font-roboto flex flex-col overflow-hidden">
+    <div className="h-screen bg-black text-white font-roboto flex flex-col overflow-hidden pt-20">
       {/* Top Banner Accent */}
-      <div className="absolute top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute top-20 left-0 right-0 h-[400px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
       {/* Header */}
       <div className="border-b border-white/10 bg-black/40 backdrop-blur-md relative z-10 flex-shrink-0">
@@ -39,6 +141,13 @@ export const CreateStrategy: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleShowJson}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+            >
+              <FileJson className="w-4 h-4" />
+              JSON
+            </button>
             <button
               onClick={handleTest}
               className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
@@ -58,24 +167,85 @@ export const CreateStrategy: React.FC = () => {
       </div>
 
       {/* Main Content - Takes remaining height */}
-      <div className="flex-1 flex overflow-hidden relative z-10 min-h-0">
+      <div
+        ref={containerRef}
+        className="flex-1 flex overflow-hidden relative z-10 min-h-0"
+        onMouseMove={(e) => {
+          if (!isDragging || !containerRef.current) return;
+          const bounds = containerRef.current.getBoundingClientRect();
+          const pct = ((e.clientX - bounds.left) / bounds.width) * 100;
+          const clamped = Math.min(80, Math.max(20, pct));
+          setSplit(clamped);
+        }}
+        onMouseUp={() => setIsDragging(false)}
+        onMouseLeave={() => setIsDragging(false)}
+      >
         {/* Left: Block Palette */}
         <div className="w-56 flex-shrink-0 h-full overflow-hidden">
-          <BlockPalette onDragStart={() => {}} />
+          <BlockPalette onDragStart={handleDragStart} />
         </div>
 
-        {/* Center: Node Editor - Takes most space */}
-        <div className="flex-1 relative min-w-0 h-full overflow-hidden bg-[#f8fafc]">
-          <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">
-            Canvas removed
-          </div>
+        {/* Center: Node Editor - Resizable with right pane */}
+        <div
+          className="h-full overflow-hidden bg-[#f8fafc] border-r border-slate-200 relative"
+          style={{ flexBasis: `${split}%` }}
+          onDragOver={(e) => {
+            e.preventDefault(); // Allow drop
+          }}
+        >
+          <StrategyCanvas />
+          {selectedNode && (() => {
+            // Always get the latest node from nodes array
+            const currentNode = nodes.find(n => n.id === selectedNode.id);
+            if (!currentNode) return null;
+            
+            return (
+              <NodePropertiesPanel
+                key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
+                node={currentNode}
+                onClose={() => setSelectedNode(null)}
+                onUpdateNode={updateNode}
+              />
+            );
+          })()}
         </div>
 
-        {/* Right: Chart Panel - Smaller */}
-        <div className="w-[400px] flex-shrink-0 h-full overflow-hidden">
-          <ChartPanel nodes={[]} edges={[]} />
+        {/* Drag handle between center and right */}
+        <div
+          className={`w-2 cursor-col-resize bg-slate-200/80 hover:bg-slate-300 transition-colors ${
+            isDragging ? 'bg-slate-400' : ''
+          }`}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+        />
+
+        {/* Right: Chart Panel - Resizable with handle */}
+        <div
+          className="h-full overflow-hidden bg-black"
+          style={{ flexBasis: `${100 - split}%` }}
+        >
+          <ChartPanel />
         </div>
       </div>
+
+      {/* JSON Modal */}
+      <JsonModal
+        isOpen={showJsonModal}
+        onClose={() => setShowJsonModal(false)}
+        onSave={handleSaveJson}
+      />
+
+      {/* Save Strategy Modal */}
+      {apiPayload && (
+        <SaveStrategyModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          onSave={handleSaveStrategy}
+          apiPayload={apiPayload}
+        />
+      )}
     </div>
   );
 };
