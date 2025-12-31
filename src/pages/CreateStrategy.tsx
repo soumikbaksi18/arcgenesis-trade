@@ -1,11 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BlockPalette, BlockDefinition } from '../components/strategyBuilder/BlockPalette';
 import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
 import { StrategyCanvas } from '../components/strategyBuilder/StrategyCanvas';
+import { RightPanel } from '../components/strategyBuilder/RightPanel';
 import { NodePropertiesPanel } from '../components/strategyBuilder/NodePropertiesPanel';
 import { JsonModal } from '../components/strategyBuilder/JsonModal';
 import { SaveStrategyModal } from '../components/strategyBuilder/SaveStrategyModal';
+import { BlockDefinition } from '../components/strategyBuilder/BlockPalette';
 import { ArrowLeft, Save, Play, FileJson } from 'lucide-react';
 import { useStrategyStore } from '../stores/strategyStore';
 import { useStrategiesStore } from '../stores/strategiesStore';
@@ -23,8 +24,6 @@ export const CreateStrategy: React.FC = () => {
     selectedNode,
     showJsonModal,
     apiPayload,
-    setNodes,
-    setEdges,
     setSelectedNode,
     updateNode,
     setShowJsonModal,
@@ -34,6 +33,8 @@ export const CreateStrategy: React.FC = () => {
 
   const addStrategy = useStrategiesStore((state) => state.addStrategy);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [canvasChartSplit, setCanvasChartSplit] = useState<number>(60); // Split between canvas and chart (vertical)
+  const [isDraggingVertical, setIsDraggingVertical] = useState<boolean>(false);
 
   const handleDragStart = (event: React.DragEvent, block: BlockDefinition) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
@@ -171,46 +172,78 @@ export const CreateStrategy: React.FC = () => {
         ref={containerRef}
         className="flex-1 flex overflow-hidden relative z-10 min-h-0"
         onMouseMove={(e) => {
-          if (!isDragging || !containerRef.current) return;
-          const bounds = containerRef.current.getBoundingClientRect();
-          const pct = ((e.clientX - bounds.left) / bounds.width) * 100;
-          const clamped = Math.min(80, Math.max(20, pct));
-          setSplit(clamped);
+          if (isDraggingVertical && containerRef.current) {
+            const bounds = containerRef.current.getBoundingClientRect();
+            const pct = ((e.clientY - bounds.top) / bounds.height) * 100;
+            const clamped = Math.min(80, Math.max(20, pct));
+            setCanvasChartSplit(clamped);
+          } else if (isDragging && containerRef.current) {
+            const bounds = containerRef.current.getBoundingClientRect();
+            const pct = ((e.clientX - bounds.left) / bounds.width) * 100;
+            const clamped = Math.min(80, Math.max(20, pct));
+            setSplit(clamped);
+          }
         }}
-        onMouseUp={() => setIsDragging(false)}
-        onMouseLeave={() => setIsDragging(false)}
+        onMouseUp={() => {
+          setIsDragging(false);
+          setIsDraggingVertical(false);
+        }}
+        onMouseLeave={() => {
+          setIsDragging(false);
+          setIsDraggingVertical(false);
+        }}
       >
-        {/* Left: Block Palette */}
-        <div className="w-56 flex-shrink-0 h-full overflow-hidden">
-          <BlockPalette onDragStart={handleDragStart} />
-        </div>
-
-        {/* Center: Node Editor - Resizable with right pane */}
+        {/* Left Column: Canvas (top) + Chart (bottom) */}
         <div
-          className="h-full overflow-hidden bg-[#f8fafc] border-r border-slate-200 relative"
+          className="h-full overflow-hidden flex flex-col"
           style={{ flexBasis: `${split}%` }}
-          onDragOver={(e) => {
-            e.preventDefault(); // Allow drop
-          }}
         >
-          <StrategyCanvas />
-          {selectedNode && (() => {
-            // Always get the latest node from nodes array
-            const currentNode = nodes.find(n => n.id === selectedNode.id);
-            if (!currentNode) return null;
-            
-            return (
-              <NodePropertiesPanel
-                key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
-                node={currentNode}
-                onClose={() => setSelectedNode(null)}
-                onUpdateNode={updateNode}
-              />
-            );
-          })()}
+          {/* Canvas Section */}
+          <div
+            className="overflow-hidden bg-[#f8fafc] border-r border-slate-200 relative"
+            style={{ flexBasis: `${canvasChartSplit}%` }}
+            onDragOver={(e) => {
+              e.preventDefault(); // Allow drop
+            }}
+          >
+            <StrategyCanvas />
+            {selectedNode && (() => {
+              // Always get the latest node from nodes array
+              const currentNode = nodes.find(n => n.id === selectedNode.id);
+              if (!currentNode) return null;
+              
+              return (
+                <NodePropertiesPanel
+                  key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
+                  node={currentNode}
+                  onClose={() => setSelectedNode(null)}
+                  onUpdateNode={updateNode}
+                />
+              );
+            })()}
+          </div>
+
+          {/* Vertical Drag Handle */}
+          <div
+            className={`h-2 cursor-row-resize bg-slate-200/80 hover:bg-slate-300 transition-colors ${
+              isDraggingVertical ? 'bg-slate-400' : ''
+            }`}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setIsDraggingVertical(true);
+            }}
+          />
+
+          {/* Chart Section */}
+          <div
+            className="overflow-hidden bg-black"
+            style={{ flexBasis: `${100 - canvasChartSplit}%` }}
+          >
+            <ChartPanel />
+          </div>
         </div>
 
-        {/* Drag handle between center and right */}
+        {/* Horizontal Drag Handle */}
         <div
           className={`w-2 cursor-col-resize bg-slate-200/80 hover:bg-slate-300 transition-colors ${
             isDragging ? 'bg-slate-400' : ''
@@ -221,12 +254,12 @@ export const CreateStrategy: React.FC = () => {
           }}
         />
 
-        {/* Right: Chart Panel - Resizable with handle */}
+        {/* Right Column: Chat Interface / Blocks Palette */}
         <div
-          className="h-full overflow-hidden bg-black"
+          className="h-full overflow-hidden"
           style={{ flexBasis: `${100 - split}%` }}
         >
-          <ChartPanel />
+          <RightPanel onDragStart={handleDragStart} />
         </div>
       </div>
 
