@@ -157,7 +157,6 @@ export const StrategyCanvas: React.FC = () => {
       setEdges(edges.filter(
         (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
       ));
-      // Clear selection if deleted node was selected
       if (selectedNode && deletedIds.has(selectedNode.id)) {
         setSelectedNode(null);
       }
