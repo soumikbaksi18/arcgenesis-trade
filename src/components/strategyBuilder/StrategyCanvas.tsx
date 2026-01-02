@@ -192,7 +192,7 @@ export const StrategyCanvas: React.FC = () => {
         nodeTypes={nodeTypes}
         fitView={nodes.length > 0}
         fitViewOptions={{ padding: 0.3, maxZoom: 1.5, minZoom: 0.4 }}
-        className="bg-[#f8fafc]"
+        className="bg-[#121212]"
         style={{ width: '100%', height: '100%' }}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         minZoom={0.3}
@@ -215,7 +215,7 @@ export const StrategyCanvas: React.FC = () => {
         selectionKeyCode={['Shift']}
         onNodesDelete={handleNodesDelete}
       >
-        <Background color="#e2e8f0" gap={16} size={1} />
+        <Background color="#2a2a2a" gap={16} size={1} />
         <Controls className="bg-white/80 border border-slate-200 shadow-lg" showInteractive />
       </ReactFlow>
     </ReactFlowProvider>

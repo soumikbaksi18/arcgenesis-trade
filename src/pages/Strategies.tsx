@@ -121,7 +121,7 @@ export const Strategies: React.FC = () => {
           {activeTab === 'my' && (
             <button
               onClick={() => navigate('/strategies/create')}
-              className="px-6 py-3 bg-yellow-500 text-black rounded-xl font-bold text-sm hover:bg-yellow-400 transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-500 transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
             >
               <Plus className="w-4 h-4" />
               Create Strategy
@@ -250,7 +250,7 @@ export const Strategies: React.FC = () => {
             {activeTab === 'my' && (
               <button
                 onClick={() => navigate('/strategies/create')}
-                className="mt-4 px-6 py-3 bg-yellow-500 text-black rounded-xl font-bold text-sm hover:bg-yellow-400 transition-all"
+                className="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20"
               >
                 Create Strategy
               </button>

@@ -2,8 +2,8 @@ import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BlockDefinition } from '../components/strategyBuilder/BlockPalette';
 import { StrategyCanvas } from '../components/strategyBuilder/StrategyCanvas';
-import { ChartPanel } from '../components/strategyBuilder/ChartPanel';
 import { RightPanel } from '../components/strategyBuilder/RightPanel';
+import { Toolbox } from '../components/strategyBuilder/Toolbox';
 import { NodePropertiesPanel } from '../components/strategyBuilder/NodePropertiesPanel';
 import { JsonModal } from '../components/strategyBuilder/JsonModal';
 import { SaveStrategyModal } from '../components/strategyBuilder/SaveStrategyModal';
@@ -14,10 +14,6 @@ import { useStrategiesStore } from '../stores/strategiesStore';
 export const CreateStrategy: React.FC = () => {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [split, setSplit] = useState<number>(60); // percent for left area vs. right
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [verticalSplit, setVerticalSplit] = useState<number>(50); // percent for canvas vs. chart (vertical)
-  const [isDraggingVertical, setIsDraggingVertical] = useState<boolean>(false);
   
   // Zustand stores
   const {
@@ -26,8 +22,6 @@ export const CreateStrategy: React.FC = () => {
     selectedNode,
     showJsonModal,
     apiPayload,
-    setNodes,
-    setEdges,
     setSelectedNode,
     updateNode,
     setShowJsonModal,
@@ -37,6 +31,8 @@ export const CreateStrategy: React.FC = () => {
 
   const addStrategy = useStrategiesStore((state) => state.addStrategy);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [showRightPanel, setShowRightPanel] = useState(false);
 
   const handleDragStart = (event: React.DragEvent, block: BlockDefinition) => {
     event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
@@ -107,7 +103,8 @@ export const CreateStrategy: React.FC = () => {
   };
 
   const handleTest = () => {
-    // TODO: Run backtest
+    setActiveTool('chart');
+    setShowRightPanel(true);
     console.log('Testing strategy');
   };
 
@@ -123,147 +120,118 @@ export const CreateStrategy: React.FC = () => {
     console.log('Updated API Payload:', updatedPayload);
   };
 
+  const handleToolSelect = (toolId: string) => {
+    setActiveTool(toolId);
+    setShowRightPanel(true);
+    
+    // Handle special actions
+    if (toolId === 'simulate' || toolId === 'backtest') {
+      handleTest();
+    }
+  };
+
+  const handleCloseRightPanel = () => {
+    setShowRightPanel(false);
+    setActiveTool(null);
+  };
+
   return (
     <div className="h-screen bg-black text-white font-roboto flex flex-col overflow-hidden pt-20">
       {/* Top Banner Accent */}
       <div className="absolute top-20 left-0 right-0 h-[400px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent pointer-events-none" />
 
-      {/* Header */}
-      <div className="border-b border-white/10 bg-black/40 backdrop-blur-md relative z-10 flex-shrink-0">
-        <div className="max-w-full mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/strategies')}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-white/60" />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold text-white">Create Strategy</h1>
-              <div className="text-xs text-white/40">Build your automated trading workflow</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
+      {/* Main Content - Full Screen Canvas with Floating Panels */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-hidden relative z-10 min-h-0 flex"
+      >
+        {/* Full Screen Canvas */}
+        <div
+          className="flex-1 h-full overflow-hidden bg-[#121212] relative"
+          onDragOver={(e) => {
+            e.preventDefault(); // Allow drop
+          }}
+        >
+          {/* Floating Action Bar - Positioned to avoid right panel */}
+          <div className={`absolute top-4 transition-all duration-300 z-20 flex items-center gap-3 ${
+            showRightPanel 
+              ? activeTool === 'chart' ? 'right-[calc(45%+6rem)]' : 'right-[26rem]' 
+              : 'right-4'
+          }`}>
             <button
               onClick={handleShowJson}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/10 shadow-lg rounded-lg text-sm font-bold text-white/80 hover:bg-[#2a2a2a] hover:text-white transition-colors flex items-center gap-2"
             >
-              <FileJson className="w-4 h-4" />
+              <FileJson className="w-4 h-4 text-blue-400" />
               JSON
             </button>
             <button
               onClick={handleTest}
-              className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/10 shadow-lg rounded-lg text-sm font-bold text-white/80 hover:bg-[#2a2a2a] hover:text-white transition-colors flex items-center gap-2"
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-4 h-4 text-green-400" />
               Test
             </button>
             <button
               onClick={handleSave}
-              className="px-6 py-2 bg-yellow-500 text-black rounded-lg text-sm font-bold hover:bg-yellow-400 transition-colors flex items-center gap-2"
+              className="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-500 transition-colors flex items-center gap-2 shadow-lg shadow-indigo-500/20"
             >
               <Save className="w-4 h-4" />
               Save Strategy
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content - Takes remaining height */}
-      <div
-        ref={containerRef}
-        className="flex-1 flex overflow-hidden relative z-10 min-h-0"
-        onMouseMove={(e) => {
-          if (isDragging && containerRef.current) {
-            const bounds = containerRef.current.getBoundingClientRect();
-            const pct = ((e.clientX - bounds.left) / bounds.width) * 100;
-            const clamped = Math.min(80, Math.max(20, pct));
-            setSplit(clamped);
-          }
-          if (isDraggingVertical && containerRef.current) {
-            const bounds = containerRef.current.getBoundingClientRect();
-            const pct = ((e.clientY - bounds.top) / bounds.height) * 100;
-            const clamped = Math.min(80, Math.max(20, pct));
-            setVerticalSplit(clamped);
-          }
-        }}
-        onMouseUp={() => {
-          setIsDragging(false);
-          setIsDraggingVertical(false);
-        }}
-        onMouseLeave={() => {
-          setIsDragging(false);
-          setIsDraggingVertical(false);
-        }}
-      >
-        {/* Left: Canvas (top) + Chart (bottom) - Stacked vertically */}
-        <div
-          className="h-full overflow-hidden flex flex-col"
-          style={{ flexBasis: `${split}%` }}
-        >
-          {/* Canvas Section */}
-          <div
-            className="overflow-hidden bg-[#f8fafc] border-r border-slate-200 relative"
-            style={{ flexBasis: `${verticalSplit}%` }}
-            onDragOver={(e) => {
-              e.preventDefault(); // Allow drop
-            }}
-          >
-            <StrategyCanvas />
-            {selectedNode && (() => {
-              // Always get the latest node from nodes array
-              const currentNode = nodes.find(n => n.id === selectedNode.id);
-              if (!currentNode) return null;
-              
-              return (
-                <NodePropertiesPanel
-                  key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
-                  node={currentNode}
-                  onClose={() => setSelectedNode(null)}
-                  onUpdateNode={updateNode}
-                />
-              );
-            })()}
+          {/* Back Button Overlay */}
+          <div className="absolute top-4 left-4 z-20">
+            <button
+              onClick={() => navigate('/strategies')}
+              className="p-2 bg-[#1a1a1a]/80 backdrop-blur-md border border-white/10 shadow-lg rounded-lg hover:bg-[#2a2a2a] transition-colors text-white/80 hover:text-white"
+              title="Back to strategies"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Vertical Drag Handle */}
-          <div
-            className={`h-2 cursor-row-resize bg-slate-200/80 hover:bg-slate-300 transition-colors ${
-              isDraggingVertical ? 'bg-slate-400' : ''
+          <StrategyCanvas />
+          {selectedNode && (() => {
+            // Always get the latest node from nodes array
+            const currentNode = nodes.find(n => n.id === selectedNode.id);
+            if (!currentNode) return null;
+            
+            return (
+              <NodePropertiesPanel
+                key={`${currentNode.id}-${JSON.stringify(currentNode.data?.params || {})}`}
+                node={currentNode}
+                onClose={() => setSelectedNode(null)}
+                onUpdateNode={updateNode}
+              />
+            );
+          })()}
+        </div>
+
+        {/* Floating Right Panel - Positioned absolutely over canvas */}
+        {showRightPanel && (
+          <div 
+            className={`absolute top-4 right-20 bottom-4 z-30 pointer-events-none transition-all duration-300 ${
+              activeTool === 'chart' ? 'w-[45%]' : 'w-80'
             }`}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setIsDraggingVertical(true);
-            }}
-          />
-
-          {/* Chart Section */}
-          <div
-            className="overflow-hidden bg-black"
-            style={{ flexBasis: `${100 - verticalSplit}%` }}
           >
-            <ChartPanel />
+            <div className="h-full pointer-events-auto">
+              <RightPanel
+                onDragStart={handleDragStart}
+                activeTool={activeTool}
+                onClose={handleCloseRightPanel}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Horizontal Drag Handle between left and right */}
-        <div
-          className={`w-2 cursor-col-resize bg-slate-200/80 hover:bg-slate-300 transition-colors ${
-            isDragging ? 'bg-slate-400' : ''
-          }`}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
+        {/* Rightmost Toolbox */}
+        <Toolbox
+          onSelectTool={handleToolSelect}
+          activeTool={activeTool}
+          hasBlocks={nodes.length > 0}
         />
-
-        {/* Right: RightPanel with AI Assistant and Blocks tabs */}
-        <div
-          className="h-full overflow-hidden bg-black"
-          style={{ flexBasis: `${100 - split}%` }}
-        >
-          <RightPanel onDragStart={handleDragStart} />
-        </div>
       </div>
 
       {/* JSON Modal */}

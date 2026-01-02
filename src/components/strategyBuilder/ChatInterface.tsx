@@ -18,7 +18,7 @@ export const ChatInterface: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { nodes, edges, setNodes, setEdges, addNode } = useStrategyStore();
+  const { edges, setEdges, addNode } = useStrategyStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -61,53 +61,314 @@ export const ChatInterface: React.FC = () => {
     const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY;
     
     if (!openaiApiKey) {
-      // Simple pattern matching fallback
+      // Enhanced pattern matching for common strategy requests
       const lowerPrompt = prompt.toLowerCase();
-      if (lowerPrompt.includes('sma') || lowerPrompt.includes('moving average')) {
-        return 'I\'ll create a Simple Moving Average (SMA) indicator for you. This will calculate the average price over a specified period.';
+      
+      // Extract token from prompt (ETH, BTC, etc.)
+      const tokenMatch = lowerPrompt.match(/\b(eth|btc|apt|sol|usdc|usdt)\b/i);
+      const token = tokenMatch ? tokenMatch[1].toUpperCase() : 'ETH';
+      
+      // Detect strategy type
+      if (lowerPrompt.includes('trend following') || lowerPrompt.includes('trend')) {
+        return `I'll create a trend following strategy for ${token}. This will use moving averages to detect trends and execute trades.`;
       }
-      if (lowerPrompt.includes('buy') || lowerPrompt.includes('purchase')) {
-        return 'I\'ll add a Buy action block. This will execute a buy order when the condition is met.';
+      if (lowerPrompt.includes('rsi') || lowerPrompt.includes('relative strength')) {
+        return `I'll create an RSI-based strategy for ${token}. This will use the Relative Strength Index to identify overbought/oversold conditions.`;
       }
-      return 'I understand you want to build a trading strategy. Please describe the specific indicators, conditions, and actions you\'d like to use.';
+      if (lowerPrompt.includes('sma') || lowerPrompt.includes('simple moving average')) {
+        return `I'll create an SMA-based strategy for ${token}. This will use Simple Moving Average to identify trends.`;
+      }
+      if (lowerPrompt.includes('ema') || lowerPrompt.includes('exponential moving average')) {
+        return `I'll create an EMA-based strategy for ${token}. This will use Exponential Moving Average for trend detection.`;
+      }
+      if (lowerPrompt.includes('macd')) {
+        return `I'll create a MACD-based strategy for ${token}. This will use Moving Average Convergence Divergence for signals.`;
+      }
+      if (lowerPrompt.includes('mean reversion')) {
+        return `I'll create a mean reversion strategy for ${token}. This will trade price deviations from the mean.`;
+      }
+      
+      // Generic response
+      return `I'll help you build a trading strategy for ${token}. Let me create the basic workflow.`;
     }
 
     // TODO: Implement actual OpenAI API call
     return 'AI response would go here';
   };
 
-  const parseBlocksFromText = (text: string) => {
-    // Simple pattern matching to identify block types
-    const lowerText = text.toLowerCase();
-    const blocksToAdd: BlockDefinition[] = [];
-
-    // Match block types from blockDefinitions
-    blockDefinitions.forEach((block) => {
-      const blockLabel = block.label.toLowerCase();
-      if (lowerText.includes(blockLabel.toLowerCase()) || lowerText.includes(block.type.toLowerCase())) {
-        blocksToAdd.push(block);
+  const parseBlocksFromText = (prompt: string) => {
+    const lowerPrompt = prompt.toLowerCase();
+    const nodesToAdd: Array<{ block: BlockDefinition; position: { x: number; y: number }; params?: any }> = [];
+    
+    // Extract token
+    const tokenMatch = lowerPrompt.match(/\b(eth|btc|apt|sol|usdc|usdt)\b/i);
+    const token = tokenMatch ? tokenMatch[1].toUpperCase() : 'ETH';
+    
+    let xPos = 250;
+    let yPos = 100;
+    const xSpacing = 300;
+    
+    // Always start with a trigger
+    const triggerBlock = blockDefinitions.find(b => b.type === 'OnCandleClose');
+    if (triggerBlock) {
+      nodesToAdd.push({
+        block: triggerBlock,
+        position: { x: xPos, y: yPos },
+        params: { timeframe: '15m' }
+      });
+      xPos += xSpacing;
+    }
+    
+    // Add Price node
+    const priceBlock = blockDefinitions.find(b => b.type === 'Price');
+    if (priceBlock) {
+      nodesToAdd.push({
+        block: priceBlock,
+        position: { x: xPos, y: yPos },
+        params: { priceType: 'close' }
+      });
+      xPos += xSpacing;
+    }
+    
+    // Detect strategy type and add appropriate blocks
+    if (lowerPrompt.includes('trend following') || lowerPrompt.includes('trend')) {
+      // Add Trend Following algorithm
+      const trendBlock = blockDefinitions.find(b => b.type === 'TrendFollowing');
+      if (trendBlock) {
+        nodesToAdd.push({
+          block: trendBlock,
+          position: { x: xPos, y: yPos },
+          params: { period: 20, strength: 1.5 }
+        });
+        xPos += xSpacing;
       }
-    });
-
-    // Add blocks to canvas
-    blocksToAdd.forEach((block, index) => {
+      
+      // Add SMA for trend detection
+      const smaBlock = blockDefinitions.find(b => b.type === 'SMA');
+      if (smaBlock) {
+        nodesToAdd.push({
+          block: smaBlock,
+          position: { x: xPos, y: yPos - 100 },
+          params: { period: 20 }
+        });
+      }
+      
+      // Add Crosses Above condition
+      const crossesBlock = blockDefinitions.find(b => b.type === 'CrossesAbove');
+      if (crossesBlock) {
+        nodesToAdd.push({
+          block: crossesBlock,
+          position: { x: xPos + xSpacing, y: yPos },
+        });
+        xPos += xSpacing;
+      }
+      
+      // Add Buy action
+      const buyBlock = blockDefinitions.find(b => b.type === 'Buy');
+      if (buyBlock) {
+        nodesToAdd.push({
+          block: buyBlock,
+          position: { x: xPos + xSpacing, y: yPos },
+          params: { amountType: 'percent', amount: 10 }
+        });
+      }
+    } else if (lowerPrompt.includes('rsi')) {
+      const rsiBlock = blockDefinitions.find(b => b.type === 'RSI');
+      if (rsiBlock) {
+        nodesToAdd.push({
+          block: rsiBlock,
+          position: { x: xPos, y: yPos },
+          params: { period: 14 }
+        });
+        xPos += xSpacing;
+      }
+      
+      // Add Less Than condition (RSI < 30 = oversold = buy)
+      const lessThanBlock = blockDefinitions.find(b => b.type === 'LessThan');
+      if (lessThanBlock) {
+        nodesToAdd.push({
+          block: lessThanBlock,
+          position: { x: xPos, y: yPos },
+        });
+        xPos += xSpacing;
+      }
+      
+      const buyBlock = blockDefinitions.find(b => b.type === 'Buy');
+      if (buyBlock) {
+        nodesToAdd.push({
+          block: buyBlock,
+          position: { x: xPos, y: yPos },
+          params: { amountType: 'percent', amount: 10 }
+        });
+      }
+    } else if (lowerPrompt.includes('sma')) {
+      const smaBlock = blockDefinitions.find(b => b.type === 'SMA');
+      if (smaBlock) {
+        nodesToAdd.push({
+          block: smaBlock,
+          position: { x: xPos, y: yPos },
+          params: { period: 20 }
+        });
+        xPos += xSpacing;
+      }
+      
+      const greaterBlock = blockDefinitions.find(b => b.type === 'GreaterThan');
+      if (greaterBlock) {
+        nodesToAdd.push({
+          block: greaterBlock,
+          position: { x: xPos, y: yPos },
+        });
+        xPos += xSpacing;
+      }
+      
+      const buyBlock = blockDefinitions.find(b => b.type === 'Buy');
+      if (buyBlock) {
+        nodesToAdd.push({
+          block: buyBlock,
+          position: { x: xPos, y: yPos },
+          params: { amountType: 'percent', amount: 10 }
+        });
+      }
+    } else {
+      // Default: Simple SMA strategy
+      const smaBlock = blockDefinitions.find(b => b.type === 'SMA');
+      if (smaBlock) {
+        nodesToAdd.push({
+          block: smaBlock,
+          position: { x: xPos, y: yPos },
+          params: { period: 20 }
+        });
+        xPos += xSpacing;
+      }
+      
+      const greaterBlock = blockDefinitions.find(b => b.type === 'GreaterThan');
+      if (greaterBlock) {
+        nodesToAdd.push({
+          block: greaterBlock,
+          position: { x: xPos, y: yPos },
+        });
+        xPos += xSpacing;
+      }
+      
+      const buyBlock = blockDefinitions.find(b => b.type === 'Buy');
+      if (buyBlock) {
+        nodesToAdd.push({
+          block: buyBlock,
+          position: { x: xPos, y: yPos },
+          params: { amountType: 'percent', amount: 10 }
+        });
+      }
+    }
+    
+    // Add Investment blocks (Pool, Payment, Risk)
+    const poolBlock = blockDefinitions.find(b => b.type === 'Pool');
+    if (poolBlock) {
+      nodesToAdd.push({
+        block: poolBlock,
+        position: { x: 250, y: yPos + 200 },
+        params: { pool: `${token}/USD` }
+      });
+    }
+    
+    const paymentBlock = blockDefinitions.find(b => b.type === 'Payment');
+    if (paymentBlock) {
+      nodesToAdd.push({
+        block: paymentBlock,
+        position: { x: 550, y: yPos + 200 },
+        params: { stablecoin: 'USDC', amount: 1000 }
+      });
+    }
+    
+    const riskBlock = blockDefinitions.find(b => b.type === 'InvestmentRisk');
+    if (riskBlock) {
+      nodesToAdd.push({
+        block: riskBlock,
+        position: { x: 850, y: yPos + 200 },
+        params: { riskLevel: 'medium' }
+      });
+    }
+    
+    // Add nodes to canvas and track their IDs
+    const timestamp = Date.now();
+    const nodeIdMap: { [type: string]: string } = {};
+    
+    nodesToAdd.forEach((item, index) => {
+      const nodeId = `${item.block.type}-${timestamp}-${index}`;
+      nodeIdMap[item.block.type] = nodeId;
+      
       const newNode = {
-        id: `${block.type}-${Date.now()}-${index}`,
+        id: nodeId,
         type: 'custom',
-        position: {
-          x: 250 + (index % 3) * 300,
-          y: 100 + Math.floor(index / 3) * 150,
-        },
+        position: item.position,
         data: {
-          label: block.label,
-          type: block.type,
-          inputs: block.inputs,
-          outputs: block.outputs,
-          params: block.params || {},
+          label: item.block.label,
+          type: item.block.type,
+          inputs: item.block.inputs,
+          outputs: item.block.outputs,
+          params: item.params || item.block.params || {},
         },
       };
       addNode(newNode);
     });
+    
+    // Create edges between nodes (basic connections)
+    setTimeout(() => {
+      const newEdges: any[] = [];
+      
+      // Connect trigger to price
+      if (nodeIdMap['OnCandleClose'] && nodeIdMap['Price']) {
+        newEdges.push({
+          id: `edge-${nodeIdMap['OnCandleClose']}-${nodeIdMap['Price']}`,
+          source: nodeIdMap['OnCandleClose'],
+          sourceHandle: 'output-0',
+          target: nodeIdMap['Price'],
+          targetHandle: 'input-0',
+        });
+      }
+      
+      // Connect price to indicator
+      const indicatorTypes = ['SMA', 'EMA', 'RSI', 'MACD', 'TrendFollowing'];
+      const indicatorType = indicatorTypes.find(t => nodeIdMap[t]);
+      if (nodeIdMap['Price'] && indicatorType) {
+        newEdges.push({
+          id: `edge-${nodeIdMap['Price']}-${nodeIdMap[indicatorType]}`,
+          source: nodeIdMap['Price'],
+          sourceHandle: 'output-0',
+          target: nodeIdMap[indicatorType],
+          targetHandle: 'input-0',
+        });
+      }
+      
+      // Connect indicator to condition
+      const conditionTypes = ['GreaterThan', 'LessThan', 'CrossesAbove', 'CrossesBelow'];
+      const conditionType = conditionTypes.find(t => nodeIdMap[t]);
+      if (indicatorType && conditionType) {
+        newEdges.push({
+          id: `edge-${nodeIdMap[indicatorType]}-${nodeIdMap[conditionType]}`,
+          source: nodeIdMap[indicatorType],
+          sourceHandle: 'output-0',
+          target: nodeIdMap[conditionType],
+          targetHandle: 'input-0',
+        });
+      }
+      
+      // Connect condition to action
+      const actionTypes = ['Buy', 'Sell'];
+      const actionType = actionTypes.find(t => nodeIdMap[t]);
+      if (conditionType && actionType) {
+        newEdges.push({
+          id: `edge-${nodeIdMap[conditionType]}-${nodeIdMap[actionType]}`,
+          source: nodeIdMap[conditionType],
+          sourceHandle: 'output-0',
+          target: nodeIdMap[actionType],
+          targetHandle: 'input-0',
+        });
+      }
+      
+      if (newEdges.length > 0) {
+        setEdges([...edges, ...newEdges]);
+      }
+    }, 200);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -118,7 +379,7 @@ export const ChatInterface: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-black/40">
+    <div className="flex flex-col h-full bg-black/60">
       {/* Chat Header */}
       <div className="flex-shrink-0 border-b border-white/10 p-4">
         <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider">AI Assistant</h3>
