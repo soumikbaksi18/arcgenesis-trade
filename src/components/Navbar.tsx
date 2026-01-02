@@ -31,7 +31,6 @@ export const Navbar = () => {
 
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/markets', label: 'Markets' },
     { path: '/strategies', label: 'Strategies' },
     { path: '/trading', label: 'Trading', hasDropdown: true },
   ];
