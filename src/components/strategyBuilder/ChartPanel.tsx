@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { TrendingUp, Play, Pause, Square } from 'lucide-react';
+import { Play, Pause, Square } from 'lucide-react';
 import { useStrategyStore } from '../../stores/strategyStore';
 import { tradingAgentService, AnalyzeResponse, ActivateRequest } from '../../services/tradingAgentService';
 import { AiLogsPanel } from './AiLogsPanel';
@@ -135,8 +135,11 @@ export const ChartPanel: React.FC = () => {
           setPollId(response._poll_id);
         }
 
-        // Add to logs
-        setLogs((prev) => [...prev, response]);
+        // Add to logs with portfolio_amount
+        setLogs((prev) => [...prev, {
+          ...response,
+          portfolio_amount: apiPayloadForPolling.portfolio_amount,
+        }]);
         setErrorMessage(null); // Clear any previous errors
 
         // Create marker for this signal
@@ -312,7 +315,7 @@ export const ChartPanel: React.FC = () => {
   }, [stopPolling]);
 
   return (
-    <div className="h-full flex flex-col bg-black/40 border-l border-white/10">
+    <div className="h-full flex flex-col">
       {/* Chart Header */}
       <div className="p-4 border-b border-white/10 flex items-center justify-between">
         <div className="flex-1">

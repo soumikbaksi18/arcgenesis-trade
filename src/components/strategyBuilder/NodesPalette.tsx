@@ -62,7 +62,6 @@ export const NodesPalette: React.FC<NodesPaletteProps> = ({
           <Plus className="w-4 h-4 text-white/60" />
           <span className="text-sm font-medium text-white">Add Node</span>
         </button>
-
         {/* Node Groups */}
         <div className="space-y-4">
           {Object.entries(nodeGroups).map(([type, typeNodes]) => {
@@ -105,7 +104,6 @@ export const NodesPalette: React.FC<NodesPaletteProps> = ({
             );
           })}
         </div>
-
         {nodes.length === 0 && (
           <div className="text-center py-8 text-white/40 text-sm">
             No nodes yet. Add nodes to build your strategy.
@@ -115,4 +113,3 @@ export const NodesPalette: React.FC<NodesPaletteProps> = ({
     </div>
   );
 };
-

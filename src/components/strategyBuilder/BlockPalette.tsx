@@ -519,22 +519,53 @@ export const blockDefinitions: BlockDefinition[] = [
   },
 ];
 
-export const BlockPalette: React.FC<{ onDragStart: (event: React.DragEvent, block: BlockDefinition) => void }> = ({ onDragStart }) => {
-  const categories = [
+interface BlockPaletteProps {
+  onDragStart: (event: React.DragEvent, block: BlockDefinition) => void;
+  categoryFilter?: string;
+}
+
+export const BlockPalette: React.FC<BlockPaletteProps> = ({ onDragStart, categoryFilter }) => {
+  const categoryMap: { [key: string]: string } = {
+    'triggers': 'trigger',
+    'market': 'market',
+    'indicators': 'indicator',
+    'conditions': 'condition',
+    'actions': 'action',
+    'risk': 'risk',
+    'ai': 'ai-model',
+    'algorithms': 'algorithm',
+    'investment': 'investment',
+  };
+
+  // If categoryFilter is provided but doesn't match, show all
+  const filterCategory = categoryFilter ? categoryMap[categoryFilter] : null;
+
+  const allCategories = [
     { name: 'Investment', blocks: blockDefinitions.filter(b => b.category === 'investment') },
     { name: 'Triggers', blocks: blockDefinitions.filter(b => b.category === 'trigger') },
     { name: 'Market Data', blocks: blockDefinitions.filter(b => b.category === 'market') },
+    { name: 'Indicators', blocks: blockDefinitions.filter(b => b.category === 'indicator') },
     { name: 'AI Models', blocks: blockDefinitions.filter(b => b.category === 'ai-model') },
     { name: 'Quant Algorithms', blocks: blockDefinitions.filter(b => b.category === 'algorithm') },
-    { name: 'Social Media', blocks: blockDefinitions.filter(b => b.category === 'social-media') },
     { name: 'Conditions', blocks: blockDefinitions.filter(b => b.category === 'condition') },
     { name: 'Actions', blocks: blockDefinitions.filter(b => b.category === 'action') },
     { name: 'Risk Management', blocks: blockDefinitions.filter(b => b.category === 'risk') },
+    { name: 'Social Media', blocks: blockDefinitions.filter(b => b.category === 'social-media') },
     { name: 'Utility', blocks: blockDefinitions.filter(b => b.category === 'utility') },
   ];
 
+  // Filter categories if categoryFilter is provided and valid
+  const categories = filterCategory
+    ? allCategories
+        .map(cat => ({
+          ...cat,
+          blocks: cat.blocks.filter(b => b.category === filterCategory)
+        }))
+        .filter(cat => cat.blocks.length > 0)
+    : allCategories;
+
   return (
-    <div className="w-full h-full bg-black/40 border-r border-white/10 overflow-y-auto custom-scrollbar flex flex-col">
+    <div className="w-full h-full bg-black/60 overflow-y-auto custom-scrollbar flex flex-col">
       <div className="p-4">
         <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-4">Blocks</h3>
         <div className="space-y-6">
