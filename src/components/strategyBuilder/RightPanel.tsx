@@ -65,3 +65,4 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onDragStart }) => {
   );
 };
 
+

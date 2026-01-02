@@ -116,3 +116,4 @@ export const NodesPalette: React.FC<NodesPaletteProps> = ({
   );
 };
 
+
