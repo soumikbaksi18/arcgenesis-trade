@@ -1,11 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
-import { Markets } from './pages/Markets';
 import { Portfolio } from './pages/Portfolio';
 import { Trading } from './pages/Trading';
 import { Strategies } from './pages/Strategies';
 import { CreateStrategy } from './pages/CreateStrategy';
-import { AppShell } from './pages/AppShell';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import './App.css';
@@ -20,22 +18,6 @@ function App() {
           <Route path="/" element={<Home />} />
           
           {/* Protected routes - require authentication */}
-          <Route 
-            path="/app" 
-            element={
-              <ProtectedRoute>
-                <AppShell />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/markets" 
-            element={
-              <ProtectedRoute>
-                <Markets />
-              </ProtectedRoute>
-            } 
-          />
           <Route 
             path="/portfolio" 
             element={
