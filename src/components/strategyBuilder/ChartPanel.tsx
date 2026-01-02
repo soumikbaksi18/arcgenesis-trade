@@ -21,7 +21,6 @@ export const ChartPanel: React.FC = () => {
   useEffect(() => {
     if (!chartRef.current) return;
 
-    // Determine symbol from API payload or default
     const symbol = apiPayload 
       ? `${apiPayload.token}USD`
       : 'ETHUSD';
