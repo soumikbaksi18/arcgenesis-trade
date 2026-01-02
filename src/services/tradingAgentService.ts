@@ -63,6 +63,27 @@ export interface AnalyzeResponse {
   stop_loss_triggered?: boolean;
   take_profit_triggered?: boolean;
   agent_status?: 'active' | 'stopped' | 'paused';
+  // P&L tracking fields
+  position_info?: {
+    status: 'open' | 'closed' | 'none';
+    type?: 'LONG' | 'SHORT';
+    entry_price?: number;
+    current_price?: number;
+    leverage?: number;
+    collateral?: number;
+    position_size?: number;
+    pnl_usd?: number;
+    pnl_pct?: number;
+    close_reason?: string;
+  };
+  portfolio_amount?: number;
+  execution_signal?: {
+    action?: string;
+    should_open?: boolean;
+    should_close?: boolean;
+    current_pnl_pct?: number;
+    current_pnl_usd?: number;
+  };
 }
 
 export const tradingAgentService = {

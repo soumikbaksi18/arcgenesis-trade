@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { Node, Edge } from 'reactflow';
 import { StrategyApiPayload } from '../utils/strategyToApiJson';
 import { convertWorkflowToApiJson } from '../utils/strategyToApiJson';
-import { initialNodes, initialEdges } from '../utils/initialStrategyNodes';
 
 interface StrategyState {
   nodes: Node[];
@@ -24,8 +23,8 @@ interface StrategyState {
   resetStore: () => void;
 }
 
-const defaultNodes: Node[] = initialNodes;
-const defaultEdges: Edge[] = initialEdges;
+const defaultNodes: Node[] = [];
+const defaultEdges: Edge[] = [];
 
 export const useStrategyStore = create<StrategyState>((set, get) => ({
   nodes: defaultNodes,

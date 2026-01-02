@@ -1,13 +1,33 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isAuthenticated, logout, login } from '../auth/localAuth';
 
 export const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isTradingHovered, setIsTradingHovered] = useState(false);
   const [isTradingMobileOpen, setIsTradingMobileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check auth status on mount and location change
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+  }, [location.pathname]);
+
+  const handleLogin = () => {
+    login();
+    setIsLoggedIn(true);
+    navigate('/app');
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsLoggedIn(false);
+    navigate('/');
+  };
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -148,15 +168,41 @@ export const Navbar = () => {
             })}
           </div>
 
-          {/* Right Side - Login/Signup & Mobile Menu */}
+          {/* Right Side - Login/Signup OR App/Logout */}
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-6">
-              <button className="font-roboto font-light text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-200">
-                Login
-              </button>
-              <button className="launch-app-button font-roboto font-medium text-black bg-white/90 backdrop-blur-md rounded-lg py-2 px-4 transition-colors duration-300 text-sm tracking-wide hover:bg-white/95">
-                Signup
-              </button>
+              {!isLoggedIn ? (
+                <>
+                  <button 
+                    onClick={handleLogin}
+                    className="font-roboto font-light text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-200"
+                  >
+                    Login
+                  </button>
+                  <button 
+                    onClick={handleLogin}
+                    className="launch-app-button font-roboto font-medium text-black bg-white/90 backdrop-blur-md rounded-lg py-2 px-4 transition-colors duration-300 text-sm tracking-wide hover:bg-white/95"
+                  >
+                    Signup
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/app"
+                    className="font-roboto font-light text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-200"
+                  >
+                    App
+                  </Link>
+                  <button 
+                    onClick={handleLogout}
+                    className="font-roboto font-light text-white/80 hover:text-white text-sm tracking-wide transition-colors duration-200 flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Logout</span>
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -237,12 +283,48 @@ export const Navbar = () => {
                 );
               })}
               <div className="flex flex-col space-y-2 pt-4 border-t border-white/10">
-                <button className="px-2 py-2 text-sm font-roboto font-light text-white/80 hover:text-white tracking-wide transition-colors duration-200 text-left">
-                  Login
-                </button>
-                <button className="launch-app-button font-roboto font-medium text-black bg-white/90 backdrop-blur-md rounded-lg py-2 px-4 transition-colors duration-300 text-sm tracking-wide hover:bg-white/95 text-center">
-                  Signup
-                </button>
+                {!isLoggedIn ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        handleLogin();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-2 text-sm font-roboto font-light text-white/80 hover:text-white tracking-wide transition-colors duration-200 text-left"
+                    >
+                      Login
+                    </button>
+                    <button 
+                      onClick={() => {
+                        handleLogin();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="launch-app-button font-roboto font-medium text-black bg-white/90 backdrop-blur-md rounded-lg py-2 px-4 transition-colors duration-300 text-sm tracking-wide hover:bg-white/95 text-center"
+                    >
+                      Signup
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/app"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-2 py-2 text-sm font-roboto font-light text-white/80 hover:text-white tracking-wide transition-colors duration-200 text-left"
+                    >
+                      App
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        handleLogout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="px-2 py-2 text-sm font-roboto font-light text-white/80 hover:text-white tracking-wide transition-colors duration-200 text-left flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
