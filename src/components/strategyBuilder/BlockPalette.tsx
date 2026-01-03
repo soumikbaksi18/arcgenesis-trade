@@ -19,6 +19,7 @@ export interface BlockDefinition {
   inputs: string[];
   outputs: string[];
   params?: { [key: string]: any };
+  comingSoon?: boolean;
 }
 
 export const blockDefinitions: BlockDefinition[] = [
@@ -366,10 +367,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Funding Rate Arbitrage',
     icon: <ArrowUpDown className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Exploit funding rate differentials',
+    description: 'Exploit funding rate differentials (Coming Soon)',
     inputs: ['price', 'data'],
     outputs: ['signal'],
     params: { threshold: 0.1 },
+    comingSoon: true,
   },
   {
     id: 'algo-market-making',
@@ -378,10 +380,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Market Making',
     icon: <Target className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Provide liquidity with bid-ask spreads',
+    description: 'Provide liquidity with bid-ask spreads (Coming Soon)',
     inputs: ['price', 'volume'],
     outputs: ['order'],
     params: { spread: 0.5, inventory: 100 },
+    comingSoon: true,
   },
   {
     id: 'algo-stat-arb',
@@ -390,10 +393,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Statistical Arbitrage',
     icon: <BarChart2 className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Pairs trading & cointegration strategies',
+    description: 'Pairs trading & cointegration strategies (Coming Soon)',
     inputs: ['price', 'price'],
     outputs: ['signal'],
     params: { lookback: 60, threshold: 2 },
+    comingSoon: true,
   },
   {
     id: 'algo-trend-following',
@@ -402,10 +406,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Trend Following',
     icon: <TrendingUp className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Momentum-based trend detection',
+    description: 'Momentum-based trend detection (Coming Soon)',
     inputs: ['price'],
     outputs: ['signal'],
     params: { period: 20, strength: 1.5 },
+    comingSoon: true,
   },
   {
     id: 'algo-portfolio-opt',
@@ -414,10 +419,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Portfolio Optimization',
     icon: <Gauge className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Risk parity & portfolio rebalancing',
+    description: 'Risk parity & portfolio rebalancing (Coming Soon)',
     inputs: ['price', 'volatility'],
     outputs: ['allocation'],
     params: { rebalancePeriod: 24, riskBudget: 1.0 },
+    comingSoon: true,
   },
   {
     id: 'algo-orderbook-imbalance',
@@ -426,10 +432,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Order Book Imbalance',
     icon: <BarChart3 className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Trade on order book pressure signals',
+    description: 'Trade on order book pressure signals (Coming Soon)',
     inputs: ['orderbook'],
     outputs: ['signal'],
     params: { depth: 10, threshold: 0.7 },
+    comingSoon: true,
   },
   {
     id: 'algo-mean-reversion',
@@ -438,10 +445,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Mean Reversion',
     icon: <RotateCcw className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Trade price deviations from mean',
+    description: 'Trade price deviations from mean (Coming Soon)',
     inputs: ['price'],
     outputs: ['signal'],
     params: { period: 20, zScore: 2.0 },
+    comingSoon: true,
   },
   {
     id: 'algo-ensemble',
@@ -450,10 +458,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Signal Ensemble',
     icon: <Network className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Combine multiple signals with ML',
+    description: 'Combine multiple signals with ML (Coming Soon)',
     inputs: ['signal', 'signal', 'signal'],
     outputs: ['signal'],
     params: { method: 'weighted', weights: [] },
+    comingSoon: true,
   },
   {
     id: 'algo-lstm',
@@ -462,10 +471,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'LSTM / GRU Models',
     icon: <Layers className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'Deep learning time-series prediction',
+    description: 'Deep learning time-series prediction (Coming Soon)',
     inputs: ['price', 'volume'],
     outputs: ['prediction'],
     params: { layers: 2, neurons: 64, lookback: 60 },
+    comingSoon: true,
   },
   {
     id: 'algo-rl',
@@ -474,10 +484,11 @@ export const blockDefinitions: BlockDefinition[] = [
     label: 'Reinforcement Learning',
     icon: <ActivityIcon className="w-4 h-4" />,
     color: 'bg-pink-500',
-    description: 'PPO / DQN for adaptive trading',
+    description: 'PPO / DQN for adaptive trading (Coming Soon)',
     inputs: ['state'],
     outputs: ['action'],
     params: { algorithm: 'PPO', episodes: 1000 },
+    comingSoon: true,
   },
   
   // Investment
@@ -568,39 +579,48 @@ export const BlockPalette: React.FC<BlockPaletteProps> = ({ onDragStart, categor
     <div className="w-full h-full bg-black/60 overflow-y-auto custom-scrollbar flex flex-col">
       <div className="p-4">
         <h3 className="text-sm font-bold text-white/60 uppercase tracking-wider mb-4">Blocks</h3>
-        <div className="space-y-6">
-          {categories.map((category) => (
-            <div key={category.name}>
-              <div className="text-xs font-bold text-white/40 uppercase mb-2">{category.name}</div>
-              <div className="space-y-2">
-                {category.blocks.map((block) => (
-                  <div
-                    key={block.id}
-                    draggable={true}
-                    onDragStart={(e) => {
-                      e.dataTransfer.effectAllowed = 'move';
-                      e.dataTransfer.setData('application/reactflow', JSON.stringify(block));
-                      onDragStart(e, block);
-                    }}
-                    onDragEnd={(e) => {
-                      // Reset drag image
-                      e.dataTransfer.clearData();
-                    }}
-                    className="flex items-center gap-2 p-2 bg-white/5 border border-white/10 rounded-lg cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors group"
-                    style={{ userSelect: 'none' }}
-                  >
-                    <div className={`${block.color} p-1.5 rounded`}>
-                      {block.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-white">{block.label}</div>
-                      <div className="text-[10px] text-white/40 truncate">{block.description}</div>
-                    </div>
+        <div className="space-y-2">
+          {categories.flatMap((category) => 
+            category.blocks.map((block) => (
+              <div
+                key={block.id}
+                draggable={!block.comingSoon}
+                onDragStart={(e) => {
+                  if (block.comingSoon) {
+                    e.preventDefault();
+                    return;
+                  }
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('application/reactflow', JSON.stringify(block));
+                  onDragStart(e, block);
+                }}
+                onDragEnd={(e) => {
+                  e.dataTransfer.clearData();
+                }}
+                className={`flex items-center gap-2 p-2 rounded-lg transition-colors group ${
+                  block.comingSoon 
+                    ? 'bg-white/5 border border-white/5 cursor-not-allowed opacity-50' 
+                    : 'bg-white/5 border border-white/10 cursor-grab active:cursor-grabbing hover:bg-white/10'
+                }`}
+                style={{ userSelect: 'none' }}
+              >
+                <div className={`${block.color} p-1.5 rounded`}>
+                  {block.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs font-bold text-white">{block.label}</div>
+                    {block.comingSoon && (
+                      <span className="text-[9px] px-1.5 py-0.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded font-semibold">
+                        COMING SOON
+                      </span>
+                    )}
                   </div>
-                ))}
+                  <div className="text-[10px] text-white/40 truncate">{block.description}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

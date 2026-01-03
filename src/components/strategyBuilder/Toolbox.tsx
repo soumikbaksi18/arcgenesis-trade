@@ -30,17 +30,6 @@ export const Toolbox: React.FC<ToolboxProps> = ({ onSelectTool, activeTool, hasB
       id: 'blocks',
       icon: <LayoutGrid className="w-5 h-5" />,
       label: 'Strategy Blocks',
-      subTools: [
-        { id: 'blocks-triggers', label: 'Triggers' },
-        { id: 'blocks-market', label: 'Market Data' },
-        { id: 'blocks-indicators', label: 'Indicators' },
-        { id: 'blocks-conditions', label: 'Conditions' },
-        { id: 'blocks-actions', label: 'Actions' },
-        { id: 'blocks-risk', label: 'Risk Management' },
-        { id: 'blocks-ai', label: 'AI Models' },
-        { id: 'blocks-algorithms', label: 'Algorithms' },
-        { id: 'blocks-investment', label: 'Investment' },
-      ],
     },
     {
       id: 'ai',
@@ -72,13 +61,7 @@ export const Toolbox: React.FC<ToolboxProps> = ({ onSelectTool, activeTool, hasB
     
     // Always select the tool
     onSelectTool(toolId);
-    
-    if (tool?.subTools) {
-      // Toggle expansion for tools with sub-tools
-      setExpandedTool(expandedTool === toolId ? null : toolId);
-    } else {
-      setExpandedTool(null);
-    }
+    setExpandedTool(null);
   };
 
   const handleSubToolClick = (subToolId: string) => {

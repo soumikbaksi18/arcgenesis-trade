@@ -19,7 +19,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onDragStart, activeTool,
     // Set default view based on active tool
     if (activeTool === 'ai') {
       setActiveTab('chat');
-    } else if (activeTool?.startsWith('blocks')) {
+    } else if (activeTool === 'blocks') {
+      setActiveTab('blocks');
+      setBlockCategory(null); // Show all blocks, no filter
+    } else if (activeTool?.startsWith('blocks-')) {
       setActiveTab('blocks');
       // Extract category from tool ID (e.g., 'blocks-triggers' -> 'trigger')
       const category = activeTool.replace('blocks-', '');
@@ -32,7 +35,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onDragStart, activeTool,
   const getPanelTitle = () => {
     if (activeTool === 'ai') return 'AI Assistant';
     if (activeTool === 'chart') return 'Market Chart';
-    if (activeTool?.startsWith('blocks')) {
+    if (activeTool === 'blocks') return 'Strategy Blocks';
+    if (activeTool?.startsWith('blocks-')) {
       const categoryMap: { [key: string]: string } = {
         'triggers': 'Triggers',
         'market': 'Market Data',
@@ -87,7 +91,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ onDragStart, activeTool,
               )}
             </button>
           )}
-          {activeTool?.startsWith('blocks') && (
+          {(activeTool === 'blocks' || activeTool?.startsWith('blocks-')) && (
             <button
               onClick={() => setActiveTab('blocks')}
               className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 transition-colors relative ${
